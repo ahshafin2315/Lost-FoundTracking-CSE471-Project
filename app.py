@@ -1,7 +1,8 @@
-from flask import Flask, render_template, session, url_for, redirect
+from flask import Flask, render_template, session, url_for, redirect, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 import os
 
 app = Flask(__name__)
@@ -9,7 +10,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///lostandfound.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = "dev_secret_key"
 app.config["UPLOAD_FOLDER"] = "static/uploads"
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max file size
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 db = SQLAlchemy(app)
@@ -73,32 +74,107 @@ class VerificationClaim(db.Model):
     verification_score = db.Column(db.Float, default=0.0)
 
 
-# Routes
+# Authentication Routes
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if "user_id" in session:
+        return redirect(url_for("lost_items"))
+        
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        
+        user = User.query.filter_by(email=email).first()
+        if user and check_password_hash(user.password, password):
+            if user.is_banned:
+                flash("Your account has been suspended. Please contact admin.", "danger")
+                return redirect(url_for("login"))
+            
+            session["user_id"] = user.id
+            session["user_name"] = user.name
+            session["is_admin"] = user.is_admin
+            session.permanent = True  # Make session persistent
+            
+            flash(f"Welcome back, {user.name}!", "success")
+            return redirect(url_for("lost_items"))
+        
+        flash("Invalid email or password", "danger")
+    return render_template("login.html")
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if "user_id" in session:
+        return redirect(url_for("lost_items"))
+        
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        contact = request.form.get("contact_info", "")
+
+        if User.query.filter_by(email=email).first():
+            flash("Email already registered", "danger")
+            return redirect(url_for("register"))
+
+        hashed_password = generate_password_hash(password)
+        new_user = User(
+            name=name,
+            email=email,
+            password=hashed_password,
+            contact_info=contact
+        )
+
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash("Registration successful! Please login.", "success")
+            return redirect(url_for("login"))
+        except Exception as e:
+            db.session.rollback()
+            flash("Registration failed. Please try again.", "danger")
+
+    return render_template("register.html")
+
+@app.route("/logout")
+def logout():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    
+    user_name = session.get("user_name", "User")
+    session.clear()
+    flash(f"Goodbye, {user_name}! You have been logged out.", "info")
+    return redirect(url_for("login"))
+
+# Login required decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please login to continue.", "warning")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+# Main Routes
 @app.route("/")
 def home():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
     return redirect(url_for("lost_items"))
 
-
 @app.route("/lost-items")
+@login_required
 def lost_items():
-    # Temporary login simulation
-    if "user_id" not in session:
-        session["user_id"] = 1  # For testing
     lost_items = Post.query.filter_by(type="lost").order_by(Post.date.desc()).all()
     return render_template("lost_items.html", items=lost_items)
 
 
-# Other routes commented for now
-"""
-@app.route("/login")
-@app.route("/register")
-@app.route("/found-items")
-@app.route("/search")
-"""
-
 # Create tables
 with app.app_context():
+    print("Creating database tables...")  # Debugging
     db.create_all()
+    print("Database tables created.")  # Debugging
 
 if __name__ == "__main__":
     app.run(debug=True)
