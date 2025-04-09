@@ -292,6 +292,25 @@ def report_found_item():
             
     return render_template("report_found_item.html")
 
+@app.route("/post/<int:post_id>")
+@login_required
+def view_post(post_id):
+    # Get the post from database using post_id
+    post = Post.query.get_or_404(post_id)
+    
+    # Get the post owner
+    post_owner = User.query.get_or_404(post.user_id)
+    
+    # Check if current user is the owner
+    is_owner = False
+    if 'user_id' in session:
+        is_owner = (session['user_id'] == post.user_id)
+    
+    return render_template("view_post.html", 
+                         post=post,
+                         post_owner=post_owner,
+                         is_owner=is_owner)
+
 # Create default users (test purposes only)
 def create_default_users():
     # Check if default admin already exists
