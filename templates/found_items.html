@@ -7,8 +7,8 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Found Items</h2>
         <div>
-            <a href="{{ url_for('lost_items') }}" class="btn btn-outline-danger me-2">View Lost Items</a>
-            <!--To be added later: Add new post button-->
+            <a><!-- TBA later, add "new found report" hyperlink here -->
+                <!-- button added below already-->
                 <i class="fas fa-hand-holding"></i> Report Found Item
             </a>
         </div>
@@ -19,17 +19,18 @@
         <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm">
                 {% if item.images %}
-                <img src="{{ url_for('static', filename='uploads/' + item.images.split(',')[0]) }}" 
-                     class="card-img-top" alt="Item image" style="height: 200px; object-fit: cover;">
+                <img src="{{ url_for('static', filename='uploads/' + item.images.split(',')[0]) }}" class="card-img-top"
+                    alt="Item image" style="height: 200px; object-fit: cover;">
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ item.category_name|title }}</h5>
                     <p class="card-text text-muted">{{ item.description[:100] }}...</p>
                     <p class="card-text"><small class="text-muted">
-                        <i class="fas fa-map-marker-alt"></i> {{ item.location }}<br>
-                        <i class="fas fa-calendar"></i> {{ item.date.strftime('%Y-%m-%d') }}
-                    </small></p>
-                    <a href="{{ url_for('view_post', post_id=item.id) }}" class="btn btn-outline-success">View Details</a>
+                            <i class="fas fa-map-marker-alt"></i> {{ item.location }}<br>
+                            <i class="fas fa-calendar"></i> {{ item.date.strftime('%Y-%m-%d') }}
+                        </small></p>
+                    <a href="{{ url_for('view_post', post_id=item.id) }}" class="btn btn-outline-success">View
+                        Details</a>
                 </div>
             </div>
         </div>

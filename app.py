@@ -175,11 +175,38 @@ def found_items():
     found_items = Post.query.filter_by(type="found").order_by(Post.date.desc()).all()
     return render_template("found_items.html", items=found_items)
 
+# Create default users (test purposes only)
+def create_default_users():
+    # Check if default admin already exists
+    if not User.query.filter_by(email="admin@test.com").first():
+        admin = User(
+            name="Admin User",
+            email="admin@test.com",
+            password=generate_password_hash("admin123"),
+            is_admin=True,
+            contact_info="Admin Contact"
+        )
+        db.session.add(admin)
+
+    # Check if default regular user already exists
+    if not User.query.filter_by(email="user@test.com").first():
+        user = User(
+            name="Test User",
+            email="user@test.com",
+            password=generate_password_hash("user123"),
+            is_admin=False,
+            contact_info="Test User Contact"
+        )
+        db.session.add(user)
+    
+    db.session.commit()
+
 # Create tables
 with app.app_context():
-    print("Creating database tables...")  # Debugging
+    print("Creating database tables...")
     db.create_all()
-    print("Database tables created.")  # Debugging
+    create_default_users()
+    print("Database tables and default users created.")
 
 if __name__ == "__main__":
     app.run(debug=True)
