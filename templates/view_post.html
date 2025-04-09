@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}View Post{% endblock %}
+{% block title %}{{ post.item_name }} - {{ post.type|title }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -12,7 +12,7 @@
                         <span class="badge {% if post.type == 'lost' %}bg-danger{% else %}bg-success{% endif %} me-2">
                             {{ post.type|title }}
                         </span>
-                        {{ post.category_name|title }}
+                        {{ post.item_name }}
                     </h4>
                     {% if is_owner %}
                     <!--Need to add post management buttons (edit,delete)-->
@@ -37,6 +37,11 @@
                     {% endif %}
 
                     <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Category</h5>
+                        <p class="text-muted">{{ post.category_name|title }}</p>
+                    </div>
+
+                    <div class="mb-4">
                         <h5 class="border-bottom pb-2">Description</h5>
                         <p class="text-muted">{{ post.description }}</p>
                     </div>
@@ -53,13 +58,18 @@
                     </div>
 
                     <div class="mb-4">
-                        <h5 class="border-bottom pb-2">Posted By</h5>
+                        <h5 class="border-bottom pb-2">Contact Information</h5>
                         <p class="text-muted"><i class="fas fa-user text-info"></i> {{ post_owner.name }}</p>
                         {% if not is_owner and session.user_id %}
-                            <p class="text-muted"><i class="fas fa-envelope text-secondary"></i> {{ post_owner.email }}</p>
-                            {% if post_owner.contact_info %}
-                                <p class="text-muted"><i class="fas fa-phone text-success"></i> {{ post_owner.contact_info }}</p>
+                            {% if post.contact_method == 'Email' %}
+                                <p class="text-muted"><i class="fas fa-envelope text-secondary"></i> {{ post_owner.email }}</p>
+                            {% elif post.contact_method == 'Phone' or post.contact_method == 'WhatsApp' %}
+                                <p class="text-muted">
+                                    <i class="fas {% if post.contact_method == 'WhatsApp' %}fa-whatsapp{% else %}fa-phone{% endif %} text-success"></i>
+                                    {{ post_owner.contact_info }}
+                                </p>
                             {% endif %}
+                            <p class="text-muted"><i class="fas fa-comment text-info"></i> Preferred contact method: {{ post.contact_method }}</p>
                         {% endif %}
                     </div>
                 </div>

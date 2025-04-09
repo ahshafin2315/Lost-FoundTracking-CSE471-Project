@@ -1,10 +1,10 @@
 from flask import Flask, render_template, session, url_for, redirect, request, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import os
-from werkzeug.utils import secure_filename
 import uuid
 
 app = Flask(__name__)
@@ -16,6 +16,7 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 # Models
@@ -55,6 +56,8 @@ class Post(db.Model):
     verification_status = db.Column(db.String(50), default="pending")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     type = db.Column(db.String(50))
+    item_name = db.Column(db.String(100))
+    contact_method = db.Column(db.String(50))
 
 
 class UserReport(db.Model):
@@ -182,13 +185,12 @@ def found_items():
 def report_lost_item():
     if request.method == "POST":
         try:
-            # Get form data
             category = request.form.get("category")
             item_name = request.form.get("item_name")
+            description = request.form.get("description")
             lost_date = datetime.strptime(request.form.get("lost_date"), "%Y-%m-%d")
             place_lost = request.form.get("place_lost")
             contact_method = request.form.get("contact_method")
-            contact_info = request.form.get("contact_info")
             
             # Handle image upload
             image_filename = None
@@ -214,9 +216,11 @@ def report_lost_item():
             # Create new post
             new_post = Post(
                 category_name=category,
-                description=f"Item Name: {item_name}\nContact Method: {contact_method}\nContact Info: {contact_info}",
+                item_name=item_name,
+                description=description,
                 date=lost_date,
                 location=place_lost,
+                contact_method=contact_method,
                 images=image_filename,
                 type="lost",
                 user_id=session["user_id"]
@@ -242,10 +246,10 @@ def report_found_item():
         try:
             category = request.form.get("category")
             item_name = request.form.get("item_name")
+            description = request.form.get("description")
             found_date = datetime.strptime(request.form.get("found_date"), "%Y-%m-%d")
             place_found = request.form.get("place_found")
             contact_method = request.form.get("contact_method")
-            contact_info = request.form.get("contact_info")
             
             # Handle image upload
             image_filename = None
@@ -271,9 +275,11 @@ def report_found_item():
             # Create new post
             new_post = Post(
                 category_name=category,
-                description=f"Item Name: {item_name}\nContact Method: {contact_method}\nContact Info: {contact_info}",
+                item_name=item_name,
+                description=description,
                 date=found_date,
                 location=place_found,
+                contact_method=contact_method,
                 images=image_filename,
                 type="found",
                 user_id=session["user_id"]

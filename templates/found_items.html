@@ -22,7 +22,8 @@
                     alt="Item image" style="height: 200px; object-fit: cover;">
                 {% endif %}
                 <div class="card-body">
-                    <h5 class="card-title">{{ item.category_name|title }}</h5>
+                    <h5 class="card-title">{{ item.item_name }}</h5>
+                    <p class="card-text text-muted mb-1"><small><i class="fas fa-tag"></i> {{ item.category_name|title }}</small></p>
                     <p class="card-text text-muted">{{ item.description[:100] }}...</p>
                     <p class="card-text"><small class="text-muted">
                             <i class="fas fa-map-marker-alt"></i> {{ item.location }}<br>

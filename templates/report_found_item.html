@@ -26,6 +26,10 @@
                             <input type="text" class="form-control" id="item_name" name="item_name" required>
                         </div>
                         <div class="mb-3">
+                            <label for="description" class="form-label">Description:</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
                             <label for="found_date" class="form-label">Found Date:</label>
                             <input type="date" class="form-control" id="found_date" name="found_date" required>
                         </div>
@@ -34,11 +38,7 @@
                             <input type="text" class="form-control" id="place_found" name="place_found" required>
                         </div>
                         <div class="mb-3">
-                            <label for="image" class="form-label">Image:</label>
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                        </div>
-                        <div class="mb-3">
-                            <label for="contact_method" class="form-label">Contact Method:</label>
+                            <label for="contact_method" class="form-label">Preferred Contact Method:</label>
                             <select class="form-select" id="contact_method" name="contact_method" required>
                                 <option value="">Select contact method</option>
                                 <option value="Email">Email</option>
@@ -47,8 +47,8 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="contact_info" class="form-label">Contact Information:</label>
-                            <input type="text" class="form-control" id="contact_info" name="contact_info" required>
+                            <label for="image" class="form-label">Image:</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
                         </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary">Submit Report</button>
