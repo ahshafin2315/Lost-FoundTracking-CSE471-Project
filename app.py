@@ -4,6 +4,8 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import os
+from werkzeug.utils import secure_filename
+import uuid
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///lostandfound.db"
@@ -174,6 +176,121 @@ def lost_items():
 def found_items():
     found_items = Post.query.filter_by(type="found").order_by(Post.date.desc()).all()
     return render_template("found_items.html", items=found_items)
+
+@app.route("/report-lost-item", methods=["GET", "POST"])
+@login_required
+def report_lost_item():
+    if request.method == "POST":
+        try:
+            # Get form data
+            category = request.form.get("category")
+            item_name = request.form.get("item_name")
+            lost_date = datetime.strptime(request.form.get("lost_date"), "%Y-%m-%d")
+            place_lost = request.form.get("place_lost")
+            contact_method = request.form.get("contact_method")
+            contact_info = request.form.get("contact_info")
+            
+            # Handle image upload
+            image_filename = None
+            if "image" in request.files:
+                image = request.files["image"]
+                if image.filename != "":
+                    try:
+                        # Ensure uploads directory exists
+                        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+                        
+                        # Generate unique filename
+                        ext = image.filename.rsplit(".", 1)[1].lower()
+                        image_filename = f"{uuid.uuid4()}.{ext}"
+                        image_path = os.path.join(app.config["UPLOAD_FOLDER"], image_filename)
+                        image.save(image_path)
+                        print(f"Image saved to: {image_path}")  # Debug logging
+                    except Exception as img_error:
+                        print(f"Image upload error: {img_error}")  # Debug logging
+                        flash("Error uploading image. Report saved without image.", "warning")
+
+            print(f"Creating post with data: {category}, {item_name}, {lost_date}")  # Debug logging
+
+            # Create new post
+            new_post = Post(
+                category_name=category,
+                description=f"Item Name: {item_name}\nContact Method: {contact_method}\nContact Info: {contact_info}",
+                date=lost_date,
+                location=place_lost,
+                images=image_filename,
+                type="lost",
+                user_id=session["user_id"]
+            )
+            
+            db.session.add(new_post)
+            db.session.commit()
+            print("Post saved successfully")  # Debug logging
+            flash("Lost item reported successfully!", "success")
+            return redirect(url_for("lost_items"))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in report_lost_item: {str(e)}")  # Debug logging
+            flash(f"Error reporting lost item: {str(e)}", "danger")
+            
+    return render_template("report_lost_item.html")
+
+@app.route("/report-found-item", methods=["GET", "POST"])
+@login_required
+def report_found_item():
+    if request.method == "POST":
+        try:
+            category = request.form.get("category")
+            item_name = request.form.get("item_name")
+            found_date = datetime.strptime(request.form.get("found_date"), "%Y-%m-%d")
+            place_found = request.form.get("place_found")
+            contact_method = request.form.get("contact_method")
+            contact_info = request.form.get("contact_info")
+            
+            # Handle image upload
+            image_filename = None
+            if "image" in request.files:
+                image = request.files["image"]
+                if image.filename != "":
+                    try:
+                        # Ensure uploads directory exists
+                        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+                        
+                        # Generate unique filename
+                        ext = image.filename.rsplit(".", 1)[1].lower()
+                        image_filename = f"{uuid.uuid4()}.{ext}"
+                        image_path = os.path.join(app.config["UPLOAD_FOLDER"], image_filename)
+                        image.save(image_path)
+                        print(f"Image saved to: {image_path}")  # Debug logging
+                    except Exception as img_error:
+                        print(f"Image upload error: {img_error}")  # Debug logging
+                        flash("Error uploading image. Report saved without image.", "warning")
+
+            print(f"Creating post with data: {category}, {item_name}, {found_date}")  # Debug logging
+
+            # Create new post
+            new_post = Post(
+                category_name=category,
+                description=f"Item Name: {item_name}\nContact Method: {contact_method}\nContact Info: {contact_info}",
+                date=found_date,
+                location=place_found,
+                images=image_filename,
+                type="found",
+                user_id=session["user_id"]
+            )
+            
+            db.session.add(new_post)
+            db.session.commit()
+            print("Post saved successfully")  # Debug logging
+            flash("Found item reported successfully!", "success")
+            return redirect(url_for("found_items"))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in report_found_item: {str(e)}")  # Debug logging
+            flash(f"Error reporting found item: {str(e)}", "danger")
+            
+    return render_template("report_found_item.html")
 
 # Create default users (test purposes only)
 def create_default_users():
