@@ -334,13 +334,6 @@ def dashboard():
     user_lost_items_count = Post.query.filter_by(user_id=session['user_id'], type="lost").count()
     user_found_items_count = Post.query.filter_by(user_id=session['user_id'], type="found").count()
     
-    # Get related posts based on user's post categories
-    user_categories = [post.category_name for post in user_posts]
-    related_posts = Post.query.filter(
-        Post.category_name.in_(user_categories),
-        Post.user_id != session['user_id']
-    ).limit(3).all()
-    
     # Get recent activities (last 5 posts)
     recent_activities = Post.query.order_by(
         Post.date.desc()
@@ -352,7 +345,6 @@ def dashboard():
         user_posts_count=user_posts_count,
         lost_items_count=user_lost_items_count,
         found_items_count=user_found_items_count,
-        related_posts=related_posts,
         recent_activities=recent_activities
     )
 
