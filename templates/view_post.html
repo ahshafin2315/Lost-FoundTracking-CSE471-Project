@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}View Post{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                {% if post.images %}
+                <img src="{{ url_for('static', filename='uploads/' + post.images) }}" 
+                     class="card-img-top" alt="Item image" style="max-height: 400px; object-fit: contain;">
+                {% endif %}
+                <div class="card-body">
+                    <h2 class="card-title">{{ post.category_name|title }}</h2>
+                    <p class="card-text">{{ post.description }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            <i class="fas fa-map-marker-alt"></i> {{ post.location }}<br>
+                            <i class="fas fa-calendar"></i> {{ post.date.strftime('%Y-%m-%d') }}<br>
+                            <i class="fas fa-user"></i> Posted by {{ post.user.name }}
+                        </small>
+                    </p>
+                    {% if post.user_id == session['user_id'] %}
+                    <div class="mt-3">
+                        <a href="#" class="btn btn-primary">Edit Post</a>
+                        <a href="#" class="btn btn-danger">Delete Post</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

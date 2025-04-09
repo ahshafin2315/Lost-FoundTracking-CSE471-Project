@@ -18,6 +18,17 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 db = SQLAlchemy(app)
 
 
+@app.context_processor
+def inject_common_data():
+    notifications = []  # You can implement actual notifications later
+    notifications_count = len(notifications)
+    return {
+        'current_year': datetime.utcnow().year,
+        'notifications': notifications,
+        'notifications_count': notifications_count
+    }
+
+
 # Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -79,9 +90,6 @@ class VerificationClaim(db.Model):
 # Authentication Routes
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if "user_id" in session:
-        return redirect(url_for("lost_items"))
-        
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
@@ -98,7 +106,7 @@ def login():
             session.permanent = True  # Make session persistent
             
             flash(f"Welcome back, {user.name}!", "success")
-            return redirect(url_for("lost_items"))
+            return redirect(url_for("dashboard"))
         
         flash("Invalid email or password", "danger")
     return render_template("login.html")
@@ -163,7 +171,7 @@ def login_required(f):
 def home():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    return redirect(url_for("lost_items"))
+    return redirect(url_for("dashboard"))
 
 @app.route("/lost-items")
 @login_required
@@ -291,6 +299,70 @@ def report_found_item():
             flash(f"Error reporting found item: {str(e)}", "danger")
             
     return render_template("report_found_item.html")
+
+@app.route("/dashboard")
+@login_required 
+def dashboard():
+    # Get button actions
+    action = request.args.get('action', '')
+    if action == 'your_posts':
+        return redirect(url_for('user_posts'))
+    elif action == 'lost_items':
+        return redirect(url_for('lost_items'))
+    elif action == 'found_items':
+        return redirect(url_for('found_items'))
+
+    # Get search query
+    search_query = request.args.get('search', '')
+    
+    # Get user stats
+    user_posts = Post.query.filter_by(user_id=session['user_id']).all()
+    user_posts_count = len(user_posts)
+    lost_items_count = Post.query.filter_by(type="lost").count()
+    found_items_count = Post.query.filter_by(type="found").count()
+    
+    # Get related posts based on user's post categories
+    user_categories = [post.category_name for post in user_posts]
+    related_posts = []
+    
+    if search_query:
+        # If there's a search query, filter by description
+        related_posts = Post.query.filter(
+            Post.description.ilike(f'%{search_query}%')
+        ).order_by(Post.date.desc()).limit(6).all()
+    elif user_categories:
+        # Otherwise show posts in same categories as user's posts
+        related_posts = Post.query.filter(
+            Post.category_name.in_(user_categories),
+            Post.user_id != session['user_id']
+        ).order_by(Post.date.desc()).limit(6).all()
+    
+    # Get recent activities (last 5 posts)
+    recent_activities = Post.query.order_by(
+        Post.date.desc()
+    ).limit(5).all()
+    
+    return render_template(
+        "dashboard.html",
+        user_posts_count=user_posts_count,
+        lost_items_count=lost_items_count,
+        found_items_count=found_items_count,
+        related_posts=related_posts,
+        recent_activities=recent_activities
+    )
+
+@app.route("/user-posts")
+@login_required
+def user_posts():
+    user_posts = Post.query.filter_by(user_id=session['user_id']).order_by(Post.date.desc()).all()
+    return render_template("user_posts.html", posts=user_posts)
+
+@app.route("/post/<int:post_id>")
+@login_required
+def view_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template("view_post.html", post=post)
+
 
 # Create default users (test purposes only)
 def create_default_users():
