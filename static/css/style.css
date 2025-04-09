@@ -93,3 +93,53 @@ footer {
 .mt-4 { margin-top: 1.5rem !important; }
 .mb-4 { margin-bottom: 1.5rem !important; }
 .text-center { text-align: center !important; }
+
+/* Notification Dropdown Styling */
+.notification-dropdown {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: none;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.notification-dropdown .dropdown-header {
+    background-color: var(--light-gray);
+}
+
+.notification-dropdown .dropdown-item:hover {
+    background-color: var(--light-gray);
+}
+
+.notification-dropdown .dropdown-item:active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Container Modifications */
+.container-fluid {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* Card Grid Enhancements */
+.row {
+    margin-right: -0.75rem;
+    margin-left: -0.75rem;
+}
+
+.col-md-3,
+.col-md-4,
+.col-md-6,
+.col-md-8,
+.col-md-9,
+.col-md-12 {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+}
+
+@media (min-width: 992px) {
+    .container-fluid {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}

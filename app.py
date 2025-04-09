@@ -325,39 +325,21 @@ def view_post(post_id):
 @app.route("/dashboard")
 @login_required 
 def dashboard():
-    # Get button actions
-    action = request.args.get('action', '')
-    if action == 'your_posts':
-        return redirect(url_for('user_posts'))
-    elif action == 'lost_items':
-        return redirect(url_for('lost_items'))
-    elif action == 'found_items':
-        return redirect(url_for('found_items'))
-
-    # Get search query
-    search_query = request.args.get('search', '')
+    # Get current user
+    current_user = User.query.get(session['user_id'])
     
     # Get user stats
     user_posts = Post.query.filter_by(user_id=session['user_id']).all()
     user_posts_count = len(user_posts)
-    lost_items_count = Post.query.filter_by(type="lost").count()
-    found_items_count = Post.query.filter_by(type="found").count()
+    user_lost_items_count = Post.query.filter_by(user_id=session['user_id'], type="lost").count()
+    user_found_items_count = Post.query.filter_by(user_id=session['user_id'], type="found").count()
     
     # Get related posts based on user's post categories
     user_categories = [post.category_name for post in user_posts]
-    related_posts = []
-    
-    if search_query:
-        # If there's a search query, filter by description
-        related_posts = Post.query.filter(
-            Post.description.ilike(f'%{search_query}%')
-        ).order_by(Post.date.desc()).limit(6).all()
-    elif user_categories:
-        # Otherwise show posts in same categories as user's posts
-        related_posts = Post.query.filter(
-            Post.category_name.in_(user_categories),
-            Post.user_id != session['user_id']
-        ).order_by(Post.date.desc()).limit(6).all()
+    related_posts = Post.query.filter(
+        Post.category_name.in_(user_categories),
+        Post.user_id != session['user_id']
+    ).limit(3).all()
     
     # Get recent activities (last 5 posts)
     recent_activities = Post.query.order_by(
@@ -366,12 +348,37 @@ def dashboard():
     
     return render_template(
         "dashboard.html",
+        user=current_user,
         user_posts_count=user_posts_count,
-        lost_items_count=lost_items_count,
-        found_items_count=found_items_count,
+        lost_items_count=user_lost_items_count,
+        found_items_count=user_found_items_count,
         related_posts=related_posts,
         recent_activities=recent_activities
     )
+
+@app.route("/my-posts")
+@login_required
+def my_posts():
+    posts = Post.query.filter_by(user_id=session['user_id']).order_by(Post.date.desc()).all()
+    return render_template("user_posts.html", posts=posts)
+
+@app.route("/my-lost-items")
+@login_required
+def my_lost_items():
+    posts = Post.query.filter_by(
+        user_id=session['user_id'],
+        type="lost"
+    ).order_by(Post.date.desc()).all()
+    return render_template("user_posts.html", posts=posts, type="lost")
+
+@app.route("/my-found-items")
+@login_required
+def my_found_items():
+    posts = Post.query.filter_by(
+        user_id=session['user_id'],
+        type="found"
+    ).order_by(Post.date.desc()).all()
+    return render_template("user_posts.html", posts=posts, type="found")
 
 @app.route("/user-posts")
 @login_required

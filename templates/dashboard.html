@@ -4,101 +4,114 @@
 
 {% block content %}
 <div class="container py-4">
-    <!-- Search Bar Section -->
-    <div class="row mb-4">
-        <div class="col-md-8 mx-auto">
-            <form action="{{ url_for('dashboard') }}" method="GET" class="d-flex">
-                <input type="text" name="search" class="form-control me-2" placeholder="Search for lost or found items..." value="{{ request.args.get('search', '') }}">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> Search
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- User Stats Section -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Your Posts</h5>
-                    <p class="card-text display-6">{{ user_posts_count }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Lost Items</h5>
-                    <p class="card-text display-6">{{ lost_items_count }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Found Items</h5>
-                    <p class="card-text display-6">{{ found_items_count }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Related Posts Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h3 class="mb-3">Related Posts</h3>
-            <div class="row">
-                {% for post in related_posts %}
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        {% if post.images %}
-                        <img src="{{ url_for('static', filename='uploads/' + post.images) }}" class="card-img-top" 
-                            alt="Item image" style="height: 200px; object-fit: cover;">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ post.category_name|title }}</h5>
-                            <p class="card-text text-muted">{{ post.description[:100] }}...</p>
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    <i class="fas fa-map-marker-alt"></i> {{ post.location }}<br>
-                                    <i class="fas fa-calendar"></i> {{ post.date.strftime('%Y-%m-%d') }}
-                                </small>
-                            </p>
-                            <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-outline-primary">View Details</a>
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        No related posts found.
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Activity Section -->
     <div class="row">
-        <div class="col-12">
-            <h3 class="mb-3">Recent Activity</h3>
-            <div class="card shadow-sm">
-                <div class="list-group list-group-flush">
-                    {% for activity in recent_activities %}
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <i class="fas fa-{{ 'search' if activity.type == 'lost' else 'check' }}-circle text-{{ 'primary' if activity.type == 'lost' else 'success' }}"></i>
-                                {{ activity.description }}
+        <!-- User Info Sidebar -->
+        <div class="col-md-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-circle fa-4x text-primary mb-3"></i>
+                    <h5 class="card-title">{{ user.name }}</h5>
+                    <p class="card-text text-muted">
+                        <i class="fas fa-envelope"></i> {{ user.email }}<br>
+                        <i class="fas fa-phone"></i> {{ user.contact_info }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- User Stats Section -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <a href="{{ url_for('my_posts') }}" class="text-decoration-none">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Your Posts</h5>
+                                <p class="card-text display-6">{{ user_posts_count }}</p>
                             </div>
-                            <small class="text-muted">{{ activity.date.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ url_for('my_lost_items') }}" class="text-decoration-none">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Lost Items</h5>
+                                <p class="card-text display-6">{{ lost_items_count }}</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ url_for('my_found_items') }}" class="text-decoration-none">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Found Items</h5>
+                                <p class="card-text display-6">{{ found_items_count }}</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Related Posts Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="mb-3">Related Posts</h3>
+                    <div class="row">
+                        {% for post in related_posts %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 shadow-sm">
+                                {% if post.images %}
+                                <img src="{{ url_for('static', filename='uploads/' + post.images) }}" class="card-img-top" 
+                                    alt="Item image" style="height: 200px; object-fit: cover;">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ post.category_name|title }}</h5>
+                                    <p class="card-text text-muted">{{ post.description[:100] }}...</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-map-marker-alt"></i> {{ post.location }}<br>
+                                            <i class="fas fa-calendar"></i> {{ post.date.strftime('%Y-%m-%d') }}
+                                        </small>
+                                    </p>
+                                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-outline-primary">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                No related posts found.
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Section -->
+            <div class="row">
+                <div class="col-12">
+                    <h3 class="mb-3">Recent Activity</h3>
+                    <div class="card shadow-sm">
+                        <div class="list-group list-group-flush">
+                            {% for activity in recent_activities %}
+                            <a href="{{ url_for('view_post', post_id=activity.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-{{ 'question' if activity.type == 'lost' else 'check' }}-circle text-{{ 'danger' if activity.type == 'lost' else 'success' }}"></i>
+                                        {{ activity.item_name }} ({{ activity.type|title }})
+                                    </div>
+                                    <small class="text-muted">{{ activity.date.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                            </a>
+                            {% else %}
+                            <div class="list-group-item">No recent activity.</div>
+                            {% endfor %}
                         </div>
                     </div>
-                    {% else %}
-                    <div class="list-group-item">No recent activity.</div>
-                    {% endfor %}
                 </div>
             </div>
         </div>
