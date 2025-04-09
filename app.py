@@ -1,6 +1,5 @@
 from flask import Flask, render_template, session, url_for, redirect, request, flash
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -16,8 +15,6 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-
 
 @app.context_processor
 def inject_common_data():
@@ -381,13 +378,6 @@ def dashboard():
 def user_posts():
     user_posts = Post.query.filter_by(user_id=session['user_id']).order_by(Post.date.desc()).all()
     return render_template("user_posts.html", posts=user_posts)
-
-@app.route("/post/<int:post_id>")
-@login_required
-def view_post(post_id):
-    post = Post.query.get_or_404(post_id)
-    return render_template("view_post.html", post=post)
-
 
 # Create default users (test purposes only)
 def create_default_users():
