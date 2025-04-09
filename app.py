@@ -169,6 +169,11 @@ def lost_items():
     lost_items = Post.query.filter_by(type="lost").order_by(Post.date.desc()).all()
     return render_template("lost_items.html", items=lost_items)
 
+@app.route("/found-items")
+@login_required
+def found_items():
+    found_items = Post.query.filter_by(type="found").order_by(Post.date.desc()).all()
+    return render_template("found_items.html", items=found_items)
 
 # Create tables
 with app.app_context():
