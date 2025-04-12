@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 import os
 import uuid
+import json
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///lostandfound.db"
@@ -328,10 +329,18 @@ def view_post(post_id):
     if 'user_id' in session:
         is_owner = (session['user_id'] == post.user_id)
     
+    verification_claim = None
+    if 'user_id' in session and not is_owner:
+        verification_claim = VerificationClaim.query.filter_by(
+            post_id=post_id,
+            user_id=session['user_id']
+        ).first()
+    
     return render_template("view_post.html", 
                          post=post,
                          post_owner=post_owner,
-                         is_owner=is_owner)
+                         is_owner=is_owner,
+                         verification_claim=verification_claim)
 
 @app.route("/dashboard")
 @login_required 
@@ -430,6 +439,104 @@ def delete_post(post_id):
     db.session.commit()
     flash("Post deleted successfully", "success")
     return redirect(url_for("dashboard"))
+
+@app.route("/post/<int:post_id>/verify", methods=["GET", "POST"])
+@login_required
+def verify_item(post_id):
+    post = Post.query.get_or_404(post_id)
+    
+    # Check if user has already submitted a verification claim
+    existing_claim = VerificationClaim.query.filter_by(
+        post_id=post_id,
+        user_id=session['user_id']
+    ).first()
+    
+    if existing_claim:
+        flash("You have already submitted a verification claim for this item.", "warning")
+        return redirect(url_for('view_post', post_id=post_id))
+    
+    if request.method == "POST":
+        proof_files = []
+        if 'proof_files' in request.files:
+            files = request.files.getlist('proof_files')
+            for file in files:
+                if file.filename:
+                    filename = secure_filename(file.filename)
+                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(file_path)
+                    proof_files.append(filename)
+
+        # Create verification claim
+        claim = VerificationClaim(
+            post_id=post_id,
+            user_id=session['user_id'],
+            proof_details=json.dumps({
+                'lost_location': request.form.get('lost_location'),
+                'lost_date': request.form.get('lost_date'),
+                'unique_identifier': request.form.get('unique_identifier'),
+                'additional_proof': request.form.get('additional_proof'),
+                'proof_files': proof_files
+            })
+        )
+        
+        try:
+            db.session.add(claim)
+            db.session.commit()
+            flash("Your verification claim has been submitted successfully.", "success")
+            return redirect(url_for('view_post', post_id=post_id))
+        except Exception as e:
+            db.session.rollback()
+            flash("An error occurred while submitting your claim.", "danger")
+            return redirect(url_for('verify_item', post_id=post_id))
+            
+    return render_template('verify_item.html', post=post)
+
+@app.route("/post/<int:post_id>/claims")
+@login_required
+def view_claims(post_id):
+    post = Post.query.get_or_404(post_id)
+    
+    # Check if current user is the post owner
+    if session.get("user_id") != post.user_id:
+        flash("Access denied", "danger")
+        return redirect(url_for("home"))
+        
+    # Get all verification claims for this post
+    claims = VerificationClaim.query.filter_by(post_id=post_id).all()
+    
+    # Get claimant details
+    claims_with_users = []
+    for claim in claims:
+        claimant = User.query.get(claim.user_id)
+        claim_data = json.loads(claim.proof_details)
+        claims_with_users.append({
+            'claim': claim,
+            'user': claimant,
+            'proof_data': claim_data
+        })
+    
+    return render_template("view_claims.html", post=post, claims=claims_with_users)
+
+@app.route("/post/<int:post_id>/claim/<int:claim_id>/update", methods=["POST"])
+@login_required
+def update_claim_status(post_id, claim_id):
+    post = Post.query.get_or_404(post_id)
+    claim = VerificationClaim.query.get_or_404(claim_id)
+    
+    # Verify that the current user owns the post
+    if session.get("user_id") != post.user_id:
+        flash("Access denied", "danger")
+        return redirect(url_for("home"))
+    
+    new_status = request.form.get("status")
+    if new_status in ["approved", "rejected"]:
+        claim.status = new_status
+        if new_status == "approved":
+            post.verification_status = "verified"
+        db.session.commit()
+        flash(f"Claim has been {new_status}", "success")
+    
+    return redirect(url_for("view_claims", post_id=post_id))
 
 # Create default users (test purposes only)
 def create_default_users():
