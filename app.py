@@ -2,6 +2,7 @@ from flask import Flask, render_template, session, url_for, redirect, request, f
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from functools import wraps
 import os
 import uuid
@@ -164,7 +165,17 @@ def login_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
+def user_only(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("user_id"):
+            return redirect("/login")
+        if session.get("is_admin"):
+            flash("This feature is only available for regular users.", "warning")
+            return redirect(url_for("admin_dashboard"))
+        return f(*args, **kwargs)
 
+    return decorated_function
 
 # Main Routes
 @app.route("/")
@@ -377,6 +388,48 @@ def my_found_items():
 def user_posts():
     user_posts = Post.query.filter_by(user_id=session['user_id']).order_by(Post.date.desc()).all()
     return render_template("user_posts.html", posts=user_posts)
+
+@app.route("/post/<int:post_id>/edit", methods=["GET", "POST"])
+@user_only
+def edit_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if session.get("user_id") != post.user_id:
+        flash("Access denied", "danger")
+        return redirect(url_for("home"))
+
+    if request.method == "POST":
+        post.description = request.form.get("description")
+        post.category_name = request.form.get("category")
+        post.location = request.form.get("location")
+
+        if "images" in request.files:
+            images = []
+            for file in request.files.getlist("images"):
+                if file.filename:
+                    filename = secure_filename(file.filename)
+                    file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                    images.append(filename)
+            if images:
+                post.images = ",".join(images)
+
+        db.session.commit()
+        flash("Post updated successfully", "success")
+        return redirect(url_for("view_post", post_id=post.id))
+
+    return render_template("edit_post.html", post=post)
+
+@app.route("/post/<int:post_id>/delete", methods=["POST"])
+@user_only
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if session.get("user_id") != post.user_id:
+        flash("Access denied", "danger")
+        return redirect(url_for("home"))
+
+    db.session.delete(post)
+    db.session.commit()
+    flash("Post deleted successfully", "success")
+    return redirect(url_for("dashboard"))
 
 # Create default users (test purposes only)
 def create_default_users():
