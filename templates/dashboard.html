@@ -24,7 +24,7 @@
             <!-- User Stats Section -->
             <div class="row mb-4">
                 <div class="col-md-4">
-                    <a href="{{ url_for('my_posts') }}" class="text-decoration-none">
+                    <a href="{{ url_for('posts.user_posts') }}" class="text-decoration-none">
                         <div class="card shadow-sm">
                             <div class="card-body text-center">
                                 <h5 class="card-title">Your Posts</h5>
@@ -34,7 +34,7 @@
                     </a>
                 </div>
                 <div class="col-md-4">
-                    <a href="{{ url_for('my_lost_items') }}" class="text-decoration-none">
+                    <a href="{{ url_for('posts.my_lost_items') }}" class="text-decoration-none">
                         <div class="card shadow-sm">
                             <div class="card-body text-center">
                                 <h5 class="card-title">Lost Items</h5>
@@ -44,7 +44,7 @@
                     </a>
                 </div>
                 <div class="col-md-4">
-                    <a href="{{ url_for('my_found_items') }}" class="text-decoration-none">
+                    <a href="{{ url_for('posts.my_found_items') }}" class="text-decoration-none">
                         <div class="card shadow-sm">
                             <div class="card-body text-center">
                                 <h5 class="card-title">Found Items</h5>
@@ -82,7 +82,7 @@
                     <div class="card shadow-sm">
                         <div class="list-group list-group-flush">
                             {% for activity in recent_activities %}
-                            <a href="{{ url_for('view_post', post_id=activity.id) }}" class="list-group-item list-group-item-action">
+                            <a href="{{ url_for('posts.view_post', post_id=activity.id) }}" class="list-group-item list-group-item-action">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <i class="fas fa-{{ 'question' if activity.type == 'lost' else 'check' }}-circle text-{{ 'danger' if activity.type == 'lost' else 'success' }}"></i>

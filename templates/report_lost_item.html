@@ -9,7 +9,7 @@
             <div class="card shadow">
                 <div class="card-body">
                     <h2 class="card-title text-center mb-4">Report Lost Item</h2>
-                    <form method="POST" action="{{ url_for('report_lost_item') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('posts.report_lost_item') }}" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label for="category" class="form-label">Item Category:</label>
                             <select class="form-select" id="category" name="category" required>

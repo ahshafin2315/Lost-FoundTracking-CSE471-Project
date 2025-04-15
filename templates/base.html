@@ -22,7 +22,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid px-4">
-            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+            <a class="navbar-brand" href="{{ url_for('dashboard.dashboard') }}">
                 <i class="fas fa-search-location"></i> Lost & Found
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -32,17 +32,17 @@
                 {% if session.user_id %}
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.dashboard' }}" href="{{ url_for('dashboard.dashboard') }}">
                             <i class="fas fa-home"></i> Home
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'lost_items' }}" href="{{ url_for('lost_items') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'posts.lost_items' }}" href="{{ url_for('posts.lost_items') }}">
                             <i class="fas fa-question-circle"></i> Lost Items
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'found_items' }}" href="{{ url_for('found_items') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'posts.found_items' }}" href="{{ url_for('posts.found_items') }}">
                             <i class="fas fa-check-circle"></i> Found Items
                         </a>
                     </li>
@@ -54,12 +54,12 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-                                <a class="dropdown-item" href="{{ url_for('report_lost_item') }}">
+                                <a class="dropdown-item" href="{{ url_for('posts.report_lost_item') }}">
                                     <i class="fas fa-question-circle"></i> Report Lost Item
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="{{ url_for('report_found_item') }}">
+                                <a class="dropdown-item" href="{{ url_for('posts.report_found_item') }}">
                                     <i class="fas fa-check-circle"></i> Report Found Item
                                 </a>
                             </li>
@@ -105,7 +105,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-                                <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
                                     <i class="fas fa-sign-out-alt"></i> Logout
                                 </a>
                             </li>

@@ -571,5 +571,7 @@ with app.app_context():
     create_default_users()
     print("Database tables and default users created.")
 
+from app import app
+
 if __name__ == "__main__":
     app.run(debug=True)

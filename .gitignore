@@ -1,0 +1,13 @@
+# __pycache__
+app/__pycache__
+app/controllers/__pycache__
+app/models/__pycache__
+app/repositories/__pycache__
+app/services/__pycache__
+app/utils/__pycache__
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

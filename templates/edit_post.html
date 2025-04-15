@@ -11,7 +11,7 @@
                     <h4 class="mb-0">Edit Post</h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('posts.edit_post', post_id=post.id) }}" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label class="form-label">Category</label>
                             <select name="category" class="form-select" required>
@@ -58,7 +58,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Save Changes
                             </button>
-                            <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-secondary">
+                            <a href="{{ url_for('posts.view_post', post_id=post.id) }}" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Cancel
                             </a>
                         </div>
