@@ -147,15 +147,36 @@ def delete_post(post_id):
 @posts_bp.route("/search")
 @login_required 
 def search():
-    query = request.args.get('q', '').strip()  # Added strip() to remove whitespace
-    post_type = request.args.get('type')
+    query = request.args.get('q', '').strip()
     
-    if not query:
-        flash("Please enter a keyword to search", "warning")
+    # Collect all filters and clean them
+    filters = {
+        'type': request.args.get('type', '').strip(),
+        'category': request.args.get('category', '').strip(),
+        'location': request.args.get('location', '').strip(),
+        'date_from': request.args.get('date_from', '').strip(),
+        'date_to': request.args.get('date_to', '').strip()
+    }
+    
+    # Check if we have any search criteria
+    has_search = query or any(filters.values())
+    if not has_search:
+        flash("Please enter a keyword or select filters to search", "warning")
         return redirect(request.referrer or url_for('dashboard.dashboard'))
-        
-    results = search_service.search_posts(query, post_type)
+    
+    # Remove empty filters
+    filters = {k: v for k, v in filters.items() if v}
+    
+    # For debugging
+    print("Search query:", query)
+    print("Applied filters:", filters)
+    
+    results = search_service.search_posts(query, filters)
     return render_template('search_results.html', 
-                         query=query, 
-                         results=results, 
-                         type=post_type)
+                         query=query,
+                         results=results,
+                         type=filters.get('type', ''),
+                         category=filters.get('category', ''),
+                         location=filters.get('location', ''),
+                         date_from=filters.get('date_from', ''),
+                         date_to=filters.get('date_to', ''))
