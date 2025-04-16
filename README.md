@@ -49,7 +49,7 @@ This project is a web-based platform designed to help users report, search, and 
 ## Getting Started  
 1. Clone the repository.
 2. Install dependencies.
-3. Run the development server. `> python app.py`
+3. Run the development server. `> python run.py`
 
 ## Contributing  
 University group based work.

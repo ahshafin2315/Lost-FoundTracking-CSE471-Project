@@ -11,27 +11,35 @@
                     <h4 class="mb-0">Edit Post</h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('posts.edit_post', post_id=post.id) }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('posts.edit_post', post_id=post.id) }}"
+                        enctype="multipart/form-data">
                         <div class="mb-3">
                             <label class="form-label">Category</label>
                             <select name="category" class="form-select" required>
                                 <option value="">Select category...</option>
-                                <option value="electronics" {% if post.category_name == 'electronics' %}selected{% endif %}>Electronics</option>
-                                <option value="documents" {% if post.category_name == 'documents' %}selected{% endif %}>Documents</option>
-                                <option value="clothing" {% if post.category_name == 'clothing' %}selected{% endif %}>Clothing</option>
-                                <option value="accessories" {% if post.category_name == 'accessories' %}selected{% endif %}>Accessories</option>
-                                <option value="other" {% if post.category_name == 'other' %}selected{% endif %}>Other</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Books">Books</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Documents">Documents</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Bags">Bags</option>
+                                <option value="Keys">Keys</option>
+                                <option value="Wallets">Wallets</option>
+                                <option value="Others">Others</option>
+                                </option>
                             </select>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="4" required>{{ post.description }}</textarea>
+                            <textarea name="description" class="form-control" rows="4"
+                                required>{{ post.description }}</textarea>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Location</label>
-                            <input type="text" name="location" class="form-control" required value="{{ post.location }}">
+                            <input type="text" name="location" class="form-control" required
+                                value="{{ post.location }}">
                         </div>
 
                         {% if post.images %}
@@ -40,8 +48,8 @@
                             <div class="row">
                                 {% for image in post.images.split(',') %}
                                 <div class="col-md-4 mb-2">
-                                    <img src="{{ url_for('static', filename='uploads/' + image) }}" 
-                                         class="img-fluid rounded shadow-sm" alt="Current image">
+                                    <img src="{{ url_for('static', filename='uploads/' + image) }}"
+                                        class="img-fluid rounded shadow-sm" alt="Current image">
                                 </div>
                                 {% endfor %}
                             </div>
