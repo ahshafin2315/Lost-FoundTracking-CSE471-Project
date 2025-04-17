@@ -1,5 +1,6 @@
 from flask import Flask, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from datetime import datetime
 import os
 
@@ -11,14 +12,29 @@ app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, '..', 'static', 'uploa
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)  # Initialize Flask-Migrate
 
 # Ensure uploads directory exists
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 @app.context_processor
 def inject_common_data():
-    notifications = []  # You can implement actual notifications later
-    notifications_count = len(notifications)
+    from app.models.notification import Notification
+    notifications = []
+    notifications_count = 0
+    
+    if 'user_id' in session:
+        # Get all notifications, ordered by created_at
+        notifications = Notification.query.filter_by(
+            user_id=session['user_id']
+        ).order_by(Notification.created_at.desc()).all()
+        
+        # Count only unread notifications
+        notifications_count = Notification.query.filter_by(
+            user_id=session['user_id'],
+            is_read=False
+        ).count()
+    
     return {
         'current_year': datetime.utcnow().year,
         'notifications': notifications,

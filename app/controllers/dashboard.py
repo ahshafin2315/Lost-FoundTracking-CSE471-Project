@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, session
+from flask import Blueprint, render_template, session, redirect, request, url_for
 from app.services.user_service import UserService
 from app.services.post_service import PostService
 from app.utils.decorators import login_required
+from app.models.notification import Notification
+from app import db
 
 dashboard_bp = Blueprint('dashboard', __name__)
 user_service = UserService()
@@ -22,3 +24,20 @@ def dashboard():
         found_items_count=stats['found_items'],
         recent_activities=recent_activities
     )
+
+@dashboard_bp.route("/notifications/mark-read/<int:notification_id>")
+@login_required
+def mark_notification_read(notification_id):
+    notification = Notification.query.get_or_404(notification_id)
+    if notification.user_id == session['user_id']:
+        notification.is_read = True
+        db.session.commit()
+    return redirect(notification.link)
+
+@dashboard_bp.route("/notifications/clear-all")
+@login_required
+def clear_notifications():
+    # Only delete notifications, don't just mark them as read
+    Notification.query.filter_by(user_id=session['user_id']).delete()
+    db.session.commit()
+    return redirect(request.referrer or url_for('dashboard.dashboard'))

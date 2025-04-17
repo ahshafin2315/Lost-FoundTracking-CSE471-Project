@@ -1,6 +1,7 @@
 from app import app, db
 from app.models.user import User
 from werkzeug.security import generate_password_hash
+from flask_migrate import upgrade
 
 def create_default_users():
     if not User.query.filter_by(email="admin@test.com").first():
@@ -27,6 +28,7 @@ def create_default_users():
 
 if __name__ == "__main__":
     with app.app_context():
+        upgrade()  # Run any pending migrations
         db.create_all()
         create_default_users()
-    app.run(host='0.0.0.0', debug=True)	
+    app.run(host='0.0.0.0', debug=True)
