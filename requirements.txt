@@ -1,9 +1,10 @@
-Flask==2.0.1
-Flask-Migrate==3.1.0
+Flask==3.1.0
+Flask-Migrate==4.1.0
 Flask-SQLAlchemy==3.1.1
-Werkzeug==2.0.1
-SQLAlchemy==2.0.39
+Werkzeug==3.1.0
+SQLAlchemy==2.0.40
 pytz==2025.2
-sentence-transformers==2.2.2
-numpy==1.21.6
-scikit-learn==1.0.2
+sentence-transformers==4.1.0
+torch==2.6.0
+numpy==2.2.5
+scikit-learn==1.6.1

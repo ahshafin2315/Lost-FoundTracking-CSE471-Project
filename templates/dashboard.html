@@ -15,6 +15,15 @@
                         <i class="fas fa-envelope"></i> {{ user.email }}<br>
                         <i class="fas fa-phone"></i> {{ user.contact_info }}
                     </p>
+                    <a href="{{ url_for('chat.messages') }}" class="btn btn-outline-primary w-100 position-relative">
+                        <i class="fas fa-comments"></i> Messages
+                        {% set unread_chats = user.received_chats|selectattr('is_read', 'equalto', false)|list|length %}
+                        {% if unread_chats > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ unread_chats }}
+                        </span>
+                        {% endif %}
+                    </a>
                 </div>
             </div>
         </div>

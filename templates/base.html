@@ -63,6 +63,16 @@
                     </div>
                 </form>
                 <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="{{ url_for('chat.messages') }}">
+                            <i class="fas fa-comments"></i>
+                            {% if unread_chats > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ unread_chats }}
+                            </span>
+                            {% endif %}
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-plus-circle"></i> Report Item
@@ -100,7 +110,7 @@
                             {% if notifications %}
                             {% for notification in notifications %}
                             <li>
-                                <a href="{{ url_for('dashboard.mark_notification_read', notification_id=notification.id) }}" 
+                                <a href="{{ url_for('dashboard.mark_notification_read', notification_id=notification.id) }}"
                                    class="dropdown-item p-3 border-bottom notification-link {% if not notification.is_read %}fw-bold bg-light{% endif %}">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-grow-1">
