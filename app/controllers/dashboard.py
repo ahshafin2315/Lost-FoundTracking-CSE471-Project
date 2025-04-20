@@ -3,7 +3,11 @@ from app.services.user_service import UserService
 from app.services.post_service import PostService
 from app.utils.decorators import login_required
 from app.models.notification import Notification
+from app.models.user import User
+from app.models.post import Post
 from app import db
+from sqlalchemy import func
+
 
 dashboard_bp = Blueprint('dashboard', __name__)
 user_service = UserService()
@@ -16,13 +20,21 @@ def dashboard():
     stats = post_service.get_user_stats(session['user_id'])
     recent_activities = post_service.get_recent_activities()
     
+    top_contributors = db.session.query(
+        User,
+        func.count(Post.id).label('post_count')
+    ).join(Post).group_by(User.id)\
+     .order_by(func.count(Post.id).desc())\
+     .limit(5).all()
+    
     return render_template(
         "dashboard.html",
         user=current_user,
         user_posts_count=stats['total_posts'],
         lost_items_count=stats['lost_items'],
         found_items_count=stats['found_items'],
-        recent_activities=recent_activities
+        recent_activities=recent_activities,
+        top_contributors=top_contributors 
     )
 
 @dashboard_bp.route("/notifications/mark-read/<int:notification_id>")
