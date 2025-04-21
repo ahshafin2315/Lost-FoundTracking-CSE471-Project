@@ -1,6 +1,7 @@
 from app import db
 from datetime import datetime
 
+
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(500), nullable=False)

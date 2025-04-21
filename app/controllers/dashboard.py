@@ -20,12 +20,10 @@ def dashboard():
     stats = post_service.get_user_stats(session['user_id'])
     recent_activities = post_service.get_recent_activities()
     
-    top_contributors = db.session.query(
-        User,
-        func.count(Post.id).label('post_count')
-    ).join(Post).group_by(User.id)\
-     .order_by(func.count(Post.id).desc())\
-     .limit(5).all()
+    top_contributors = db.session.query(User)\
+        .filter(User.contribution > 0)\
+        .order_by(User.contribution.desc())\
+        .limit(5).all()
     
     return render_template(
         "dashboard.html",
