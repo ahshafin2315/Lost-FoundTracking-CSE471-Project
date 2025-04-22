@@ -4,10 +4,12 @@ from app.services.search_service import SearchService
 from app.utils.decorators import login_required, user_only
 from app.models.verificationClaim import VerificationClaim  # Fixed import path
 from app.utils.image_utils import save_image  # Import save_image utility
+from app.services.social_media_service import SocialMediaService
 
 posts_bp = Blueprint("posts", __name__)
 post_service = PostService()
 search_service = SearchService()
+social_media_service = SocialMediaService()
 
 
 @posts_bp.route("/lost-items")
@@ -180,3 +182,19 @@ def search():
                          location=filters.get('location', ''),
                          date_from=filters.get('date_from', ''),
                          date_to=filters.get('date_to', ''))
+
+
+@posts_bp.route("/post/<int:post_id>/share/<platform>")
+@login_required
+def share_post(post_id, platform):
+    post = post_service.get_by_id(post_id)
+    sharing_url = social_media_service.get_sharing_url(platform, post)
+    
+    if sharing_url:
+        # Increment share count
+        post.share_count += 1
+        post_service.update(post)
+        return redirect(sharing_url)
+        
+    flash("Invalid sharing platform selected", "danger")
+    return redirect(url_for("posts.view_post", post_id=post_id))
