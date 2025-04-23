@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request
+from flask import Blueprint, render_template, flash, redirect, url_for, request, current_app
 from app.services.user_service import UserService
 from app.services.post_service import PostService
 from app.utils.decorators import admin_required
@@ -7,6 +7,9 @@ from app.models.post import Post
 from app.models.user_report import UserReport
 from app import db
 from datetime import datetime
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 admin_bp = Blueprint('admin', __name__)
 user_service = UserService()
@@ -124,13 +127,39 @@ def update_post_status(post_id):
 def edit_post(post_id):
     post = Post.query.get_or_404(post_id)
     if request.method == 'POST':
-        post.item_name = request.form.get('item_name')
-        post.description = request.form.get('description')
-        post.category_name = request.form.get('category')
-        post.location = request.form.get('location')
-        db.session.commit()
-        flash("Post updated successfully", "success")
-        return redirect(url_for('admin.manage_reports'))
+        try:
+            # Update all possible fields
+            post.item_name = request.form.get('item_name')
+            post.description = request.form.get('description')
+            post.category_name = request.form.get('category')
+            post.location = request.form.get('location')
+            post.contact_method = request.form.get('contact_method')
+            post.type = request.form.get('type')
+            
+            # Handle date fields
+            lost_found_date = request.form.get('lost_found_date')
+            if lost_found_date:
+                post.lOrF_date = datetime.strptime(lost_found_date, '%Y-%m-%d')
+
+            # Handle image upload
+            if 'images' in request.files:
+                files = request.files.getlist('images')
+                image_filenames = []
+                for file in files:
+                    if file and file.filename:
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename))
+                        image_filenames.append(unique_filename)
+                if image_filenames:
+                    post.images = ','.join(image_filenames)
+
+            db.session.commit()
+            flash("Post updated successfully", "success")
+            return redirect(url_for('admin.manage_reports'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error updating post: {str(e)}", "danger")
     return render_template('admin/edit_post.html', post=post)
 
 @admin_bp.route("/post/<int:post_id>/delete", methods=['POST'])
