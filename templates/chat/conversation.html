@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to check for new messages
     function checkNewMessages() {
         const currentTimeStamp = Math.floor(Date.now() / 1000);
-        fetch(`{{ url_for("chat.check_new_messages", post_id=post.id, timestamp=0) }}`.replace('0', lastCheck.toString()))
+        fetch(`{{ url_for('chat.check_new_messages', post_id=post.id) }}?timestamp=${lastCheck}`)
             .then(response => response.json())
             .then(data => {
                 if (data.error) {

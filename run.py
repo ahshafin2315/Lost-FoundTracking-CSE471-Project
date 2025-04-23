@@ -23,7 +23,7 @@ def create_default_users():
             contact_info="Test User Contact"
         )
         db.session.add(user)
-    
+
     db.session.commit()
 
 if __name__ == "__main__":

@@ -1,0 +1,73 @@
+from app.repositories.chat_repository import ChatRepository
+from app.repositories.post_repository import PostRepository
+from app.repositories.verification_repository import VerificationRepository
+from app.models.chat import Chat
+
+class ChatService:
+    def __init__(self):
+        self.chat_repository = ChatRepository()
+        self.post_repository = PostRepository()
+        self.verification_repository = VerificationRepository()
+
+    def get_user_chats(self, user_id):
+        return self.chat_repository.get_user_chats(user_id)
+
+    def get_conversation(self, post_id, user_id):
+        post = self.post_repository.get_by_id(post_id)
+        if not post:
+            raise ValueError("Post not found")
+
+        is_owner = post.user_id == user_id
+        has_approved_claim = self.verification_repository.has_approved_claim(post_id, user_id)
+        is_lost_item = post.type == 'lost'
+
+        if not (is_owner or has_approved_claim or is_lost_item):
+            raise ValueError("Unauthorized access")
+
+        # Determine other user based on chat logic
+        if is_owner:
+            claim = self.verification_repository.get_approved_claim(post_id)
+            if claim and claim.user:
+                other_user = claim.user
+            else:
+                # Fallback to first message if no approved claim
+                first_message = self.chat_repository.get_first_message(post_id, user_id)
+                if first_message:
+                    other_user = first_message.sender if first_message.sender_id != user_id else first_message.receiver
+                else:
+                    raise ValueError("No chat history found")
+        else:
+            other_user = post.user
+
+        messages = self.chat_repository.get_conversation(post_id, user_id)
+        return messages, post, other_user
+
+    def send_message(self, post_id, sender_id, receiver_id, message):
+        if not all([post_id, sender_id, receiver_id, message]):
+            raise ValueError("Missing required fields")
+
+        chat = Chat(
+            post_id=post_id,
+            sender_id=sender_id,
+            receiver_id=receiver_id,
+            message=message
+        )
+        return self.chat_repository.save(chat)
+
+    def mark_messages_read(self, messages):
+        return self.chat_repository.mark_messages_read(messages)
+
+    def get_new_messages(self, post_id, user_id, timestamp):
+        """Get messages newer than the given timestamp"""
+        post = self.post_repository.get_by_id(post_id)
+        if not post:
+            raise ValueError("Post not found")
+
+        is_owner = post.user_id == user_id
+        has_approved_claim = self.verification_repository.has_approved_claim(post_id, user_id)
+        is_lost_item = post.type == 'lost'
+
+        if not (is_owner or has_approved_claim or is_lost_item):
+            raise ValueError("Unauthorized access")
+
+        return self.chat_repository.get_new_messages(post_id, timestamp)

@@ -6,31 +6,168 @@
 <div class="container py-4">
     <div class="row">
         <div class="col-md-12">
-            <div class="card shadow">
+            <!-- Messages for My Posts -->
+            <div class="card shadow mb-4">
                 <div class="card-header bg-light">
-                    <h4 class="mb-0">My Conversations</h4>
+                    <h5 class="mb-0"><i class="fas fa-comments text-primary"></i> Conversations on My Posts</h5>
                 </div>
                 <div class="card-body">
-                    {% if posts %}
-                        <div class="list-group">
-                            {% for post in posts %}
-                                {% set unread_count = post.chats|selectattr('receiver_id', 'equalto', session.user_id)|selectattr('is_read', 'equalto', false)|list|length %}
-                                <a href="{{ url_for('chat.conversation', post_id=post.id) }}"
-                                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    {% set my_lost_posts = my_posts|selectattr('type', 'equalto', 'lost')|list %}
+                    {% set my_found_posts = my_posts|selectattr('type', 'equalto', 'found')|list %}
+
+                    {% if my_lost_posts %}
+                    <h6 class="border-bottom pb-2 text-danger"><i class="fas fa-search"></i> Lost Items</h6>
+                    <div class="list-group mb-4">
+                        {% for post in my_lost_posts %}
+                            {% set unread_count = post.chats|selectattr('receiver_id', 'equalto', session.user_id)|selectattr('is_read', 'equalto', false)|list|length %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-1">{{ post.item_name }}</h6>
-                                        <small class="text-muted">{{ post.type|title }} item</small>
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-map-marker-alt"></i> {{ post.location }}
+                                            <span class="mx-2">•</span>
+                                            <i class="fas fa-calendar"></i> Posted: {{ post.post_date.strftime('%Y-%m-%d') }}
+                                        </small>
                                     </div>
-                                    {% if unread_count > 0 %}
-                                        <span class="badge bg-primary rounded-pill">{{ unread_count }}</span>
-                                    {% endif %}
-                                </a>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <p class="text-muted">No conversations yet.</p>
-                        </div>
+                                    <div class="d-flex align-items-center">
+                                        {% if unread_count > 0 %}
+                                            <span class="badge bg-danger me-2">{{ unread_count }} new</span>
+                                        {% endif %}
+                                        <a href="{{ url_for('chat.conversation', post_id=post.id) }}"
+                                           class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="fas fa-comments"></i> Open Chat
+                                        </a>
+                                        <a href="{{ url_for('posts.view_post', post_id=post.id) }}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eye"></i> View Post
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if my_found_posts %}
+                    <h6 class="border-bottom pb-2 text-success"><i class="fas fa-check"></i> Found Items</h6>
+                    <div class="list-group">
+                        {% for post in my_found_posts %}
+                            {% set unread_count = post.chats|selectattr('receiver_id', 'equalto', session.user_id)|selectattr('is_read', 'equalto', false)|list|length %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ post.item_name }}</h6>
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-map-marker-alt"></i> {{ post.location }}
+                                            <span class="mx-2">•</span>
+                                            <i class="fas fa-calendar"></i> Posted: {{ post.post_date.strftime('%Y-%m-%d') }}
+                                        </small>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        {% if unread_count > 0 %}
+                                            <span class="badge bg-danger me-2">{{ unread_count }} new</span>
+                                        {% endif %}
+                                        <a href="{{ url_for('chat.conversation', post_id=post.id) }}"
+                                           class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="fas fa-comments"></i> Open Chat
+                                        </a>
+                                        <a href="{{ url_for('posts.view_post', post_id=post.id) }}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eye"></i> View Post
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if not my_posts %}
+                        <p class="text-muted text-center my-4">No conversations on your posts yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Messages for Other Posts -->
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-reply text-secondary"></i> My Responses to Others</h5>
+                </div>
+                <div class="card-body">
+                    {% set participating_lost = participating_posts|selectattr('type', 'equalto', 'lost')|list %}
+                    {% set participating_found = participating_posts|selectattr('type', 'equalto', 'found')|list %}
+
+                    {% if participating_lost %}
+                    <h6 class="border-bottom pb-2 text-danger"><i class="fas fa-search"></i> Lost Items</h6>
+                    <div class="list-group mb-4">
+                        {% for post in participating_lost %}
+                            {% set unread_count = post.chats|selectattr('receiver_id', 'equalto', session.user_id)|selectattr('is_read', 'equalto', false)|list|length %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ post.item_name }}</h6>
+                                        <small class="text-muted d-block">
+                                            Posted by: {{ post.user.name }}
+                                            <span class="mx-2">•</span>
+                                            <i class="fas fa-calendar"></i> {{ post.post_date.strftime('%Y-%m-%d') }}
+                                        </small>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        {% if unread_count > 0 %}
+                                            <span class="badge bg-danger me-2">{{ unread_count }} new</span>
+                                        {% endif %}
+                                        <a href="{{ url_for('chat.conversation', post_id=post.id) }}"
+                                           class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="fas fa-comments"></i> Open Chat
+                                        </a>
+                                        <a href="{{ url_for('posts.view_post', post_id=post.id) }}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eye"></i> View Post
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if participating_found %}
+                    <h6 class="border-bottom pb-2 text-success"><i class="fas fa-check"></i> Found Items</h6>
+                    <div class="list-group">
+                        {% for post in participating_found %}
+                            {% set unread_count = post.chats|selectattr('receiver_id', 'equalto', session.user_id)|selectattr('is_read', 'equalto', false)|list|length %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ post.item_name }}</h6>
+                                        <small class="text-muted d-block">
+                                            Posted by: {{ post.user.name }}
+                                            <span class="mx-2">•</span>
+                                            <i class="fas fa-calendar"></i> {{ post.post_date.strftime('%Y-%m-%d') }}
+                                        </small>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        {% if unread_count > 0 %}
+                                            <span class="badge bg-danger me-2">{{ unread_count }} new</span>
+                                        {% endif %}
+                                        <a href="{{ url_for('chat.conversation', post_id=post.id) }}"
+                                           class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="fas fa-comments"></i> Open Chat
+                                        </a>
+                                        <a href="{{ url_for('posts.view_post', post_id=post.id) }}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eye"></i> View Post
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if not participating_posts %}
+                        <p class="text-muted text-center my-4">No responses to other posts yet.</p>
                     {% endif %}
                 </div>
             </div>

@@ -81,25 +81,39 @@
                                 </p>
                             {% endif %}
                             <p class="text-muted"><i class="fas fa-comment text-info"></i> Preferred contact method: {{ post.contact_method }}</p>
+
+                            {# Direct chat button for lost items #}
+                            {% if post.type == 'lost' %}
+                                <a href="{{ url_for('chat.conversation', post_id=post.id) }}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-comments"></i> Contact About This Item
+                                </a>
+                            {% endif %}
+
+                            {# Chat button for approved found item claims #}
+                            {% if post.type == 'found' and verification_claim and verification_claim.status == 'approved' %}
+                                <a href="{{ url_for('chat.conversation', post_id=post.id) }}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-comments"></i> Chat with Owner
+                                </a>
+                            {% endif %}
                         {% endif %}
                     </div>
 
                     <div class="mb-4">
                         <h5 class="border-bottom pb-2">Share This Post</h5>
                         <div class="d-flex gap-2 mt-3">
-                            <a href="{{ url_for('posts.share_post', post_id=post.id, platform='facebook') }}" 
+                            <a href="{{ url_for('posts.share_post', post_id=post.id, platform='facebook') }}"
                                class="btn btn-primary" target="_blank">
                                 <i class="fab fa-facebook-f"></i> Share
                             </a>
-                            <a href="{{ url_for('posts.share_post', post_id=post.id, platform='twitter') }}" 
+                            <a href="{{ url_for('posts.share_post', post_id=post.id, platform='twitter') }}"
                                class="btn btn-info text-white" target="_blank">
                                 <i class="fab fa-twitter"></i> Tweet
                             </a>
-                            <a href="{{ url_for('posts.share_post', post_id=post.id, platform='whatsapp') }}" 
+                            <a href="{{ url_for('posts.share_post', post_id=post.id, platform='whatsapp') }}"
                                class="btn btn-success" target="_blank">
                                 <i class="fab fa-whatsapp"></i> WhatsApp
                             </a>
-                            <a href="{{ url_for('posts.share_post', post_id=post.id, platform='telegram') }}" 
+                            <a href="{{ url_for('posts.share_post', post_id=post.id, platform='telegram') }}"
                                class="btn btn-info" target="_blank">
                                 <i class="fab fa-telegram"></i> Telegram
                             </a>
@@ -117,7 +131,7 @@
                     </div>
                     {% endif %}
 
-                    {% if not is_owner and session.user_id and post.type == 'found' %}
+                    {% if not is_owner and session.user_id and post.type == 'found' and (not verification_claim or verification_claim.status == 'rejected') %}
                     <div class="mb-4">
                         <a href="{{ url_for('verification.verify_item', post_id=post.id) }}" class="btn btn-success">
                             <i class="fas fa-check-circle"></i> Is it yours? Verify Yourself
