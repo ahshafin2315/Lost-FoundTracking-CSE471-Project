@@ -34,3 +34,19 @@ class AdminService:
             db.session.commit()
             return True
         return False
+
+    def update_post_status(self, post_id, new_status):
+        post = Post.query.get(post_id)
+        if post and new_status in ['active', 'resolved', 'hidden', 'flagged']:
+            post.status = new_status
+            db.session.commit()
+            return True
+        return False
+
+    def delete_post(self, post_id):
+        post = Post.query.get(post_id)
+        if post:
+            db.session.delete(post)
+            db.session.commit()
+            return True
+        return False

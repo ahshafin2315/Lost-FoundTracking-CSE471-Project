@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Reports{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Reports Management</h2>
+
+    <!-- Report Type Tabs -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#fraud-reports">
+                Fraud Reports
+                {% if stats.pending_fraud_reports > 0 %}
+                <span class="badge bg-danger">{{ stats.pending_fraud_reports }}</span>
+                {% endif %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#user-reports">
+                User Reports
+                {% if stats.pending_user_reports > 0 %}
+                <span class="badge bg-danger">{{ stats.pending_user_reports }}</span>
+                {% endif %}
+            </a>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- Fraud Reports Tab -->
+        <div class="tab-pane fade show active" id="fraud-reports">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th>Reporter</th>
+                                    <th>Reported User</th>
+                                    <th>Related Item</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in fraud_reports %}
+                                <tr>
+                                    <td>{{ report.id }}</td>
+                                    <td>{{ report.type }}</td>
+                                    <td>{{ report.reporter.name }}</td>
+                                    <td>{{ report.reported_user.name }}</td>
+                                    <td>
+                                        {% if report.post %}
+                                        <a href="{{ url_for('posts.view_post', post_id=report.post.id) }}">
+                                            {{ report.post.item_name }}
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ report.reason }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if report.status == 'pending' else 'success' if report.status == 'resolved' else 'danger' }}">
+                                            {{ report.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if report.status == 'pending' %}
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                                Action
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <form action="{{ url_for('admin.resolve_fraud_report', report_id=report.id) }}" method="POST">
+                                                        <input type="hidden" name="action" value="dismiss">
+                                                        <button type="submit" class="dropdown-item">Dismiss</button>
+                                                    </form>
+                                                </li>
+                                                <li>
+                                                    <form action="{{ url_for('admin.resolve_fraud_report', report_id=report.id) }}" method="POST">
+                                                        <input type="hidden" name="action" value="ban_user">
+                                                        <button type="submit" class="dropdown-item">Ban User</button>
+                                                    </form>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Reports Tab -->
+        <div class="tab-pane fade" id="user-reports">
+            <!-- Existing user reports table -->
+        </div>
+    </div>
+</div>
+{% endblock %}

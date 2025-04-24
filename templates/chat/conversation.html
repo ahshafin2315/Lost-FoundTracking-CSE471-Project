@@ -17,16 +17,20 @@
                     </a>
                 </div>
                 <div class="card-body chat-container" style="height: 400px; overflow-y: auto;" id="chatMessages">
-                    {% for message in messages %}
-                        <div class="mb-3 {% if message.sender_id == session.user_id %}text-end{% endif %}">
-                            <div class="d-inline-block p-2 rounded {% if message.sender_id == session.user_id %}bg-primary text-white{% else %}bg-light{% endif %}" style="max-width: 70%;">
-                                <div class="message-text">{{ message.message }}</div>
-                                <small class="{% if message.sender_id == session.user_id %}text-white-50{% else %}text-muted{% endif %}">
-                                    {{ message.created_at.strftime('%H:%M') }}
-                                </small>
-                            </div>
+                    <div class="chat-messages">
+                        {% for message in messages %}
+                        <div class="message {{ 'sent' if message.chat.sender_id == session['user_id'] else 'received' }}">
+                            {{ message.content }}
+                            <small class="text-muted">{{ message.created_at.strftime('%H:%M') }}</small>
+                            {% if message.chat.sender_id != session['user_id'] %}
+                            <button class="btn btn-sm btn-link text-warning"
+                                    onclick='showReportModal("message", "{{ message.chat.sender_id }}", "{{ message.id }}")'>
+                                <i class="fas fa-flag"></i>
+                            </button>
+                            {% endif %}
                         </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 </div>
                 <div class="card-footer">
                     <form id="messageForm" class="d-flex">

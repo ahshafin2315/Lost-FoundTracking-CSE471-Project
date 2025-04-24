@@ -1,0 +1,29 @@
+<div class="modal fade" id="reportFraudModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Report Suspicious Activity</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('reports.submit_fraud_report') }}" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="type" id="reportType">
+                    <input type="hidden" name="reported_user_id" id="reportedUserId">
+                    <input type="hidden" name="post_id" id="reportPostId">
+                    <input type="hidden" name="claim_id" id="reportClaimId">
+                    <input type="hidden" name="message_id" id="reportMessageId">
+
+                    <div class="mb-3">
+                        <label for="reportReason" class="form-label">Reason for Report</label>
+                        <textarea class="form-control" id="reportReason" name="reason" rows="4" required
+                                placeholder="Please explain why you think this activity is suspicious..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

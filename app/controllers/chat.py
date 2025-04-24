@@ -38,13 +38,13 @@ def send_message():
             post_id=request.form.get('post_id'),
             sender_id=session['user_id'],
             receiver_id=request.form.get('receiver_id'),
-            message=request.form.get('message')
+            message_content=request.form.get('message')  # Changed parameter name
         )
         return jsonify({
             'id': message.id,
-            'message': message.message,
+            'message': message.content,  # Changed from message.message to message.content
             'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'sender_name': message.sender.name
+            'sender_id': message.chat.sender_id  # Get sender_id through chat relationship
         })
     except ValueError as e:
         return jsonify({'error': str(e)}), 400

@@ -23,11 +23,11 @@ def admin_dashboard():
         'pending_reports': UserReport.query.filter_by(status='pending').count(),
         'total_reports': UserReport.query.count()
     }
-    
+
     recent_reports = UserReport.query.order_by(UserReport.created_at.desc()).limit(5).all()
     recent_users = User.query.order_by(User.id.desc()).limit(5).all()
-    
-    return render_template('admin/dashboard.html', stats=stats, 
+
+    return render_template('admin/dashboard.html', stats=stats,
                          recent_reports=recent_reports, recent_users=recent_users)
 
 @admin_bp.route("/users")
@@ -39,45 +39,31 @@ def manage_users():
 @admin_bp.route("/reports")
 @admin_required
 def manage_reports():
-    # Get filter parameters
-    category = request.args.get('category', '')
-    date_from = request.args.get('date_from', '')
-    date_to = request.args.get('date_to', '')
-    location = request.args.get('location', '')
-    status = request.args.get('status', '')
-    report_type = request.args.get('type', '')
-    
-    # Base query
-    query = Post.query
-    
-    # Apply filters
-    if category:
-        query = query.filter(Post.category_name == category)
-    if location:
-        query = query.filter(Post.location.ilike(f'%{location}%'))
-    if status:
-        query = query.filter(Post.status == status)
-    if report_type:
-        query = query.filter(Post.type == report_type)
-    if date_from:
-        query = query.filter(Post.post_date >= datetime.strptime(date_from, '%Y-%m-%d'))
-    if date_to:
-        query = query.filter(Post.post_date <= datetime.strptime(date_to, '%Y-%m-%d'))
-        
-    posts = query.order_by(Post.post_date.desc()).all()
-    user_reports = UserReport.query.order_by(UserReport.created_at.desc()).all()
-    
-    return render_template('admin/reports.html', 
-                         posts=posts,
+    # Get all reports with different types
+    fraud_reports = UserReport.query.filter(
+        UserReport.type.in_(['claim', 'message', 'post'])
+    ).order_by(UserReport.created_at.desc()).all()
+
+    # Get general user reports
+    user_reports = UserReport.query.filter_by(
+        type='user'
+    ).order_by(UserReport.created_at.desc()).all()
+
+    stats = {
+        'pending_fraud_reports': UserReport.query.filter(
+            UserReport.type.in_(['claim', 'message', 'post']),
+            UserReport.status == 'pending'
+        ).count(),
+        'pending_user_reports': UserReport.query.filter_by(
+            type='user',
+            status='pending'
+        ).count()
+    }
+
+    return render_template('admin/manage_reports.html',
+                         fraud_reports=fraud_reports,
                          user_reports=user_reports,
-                         filters={
-                             'category': category,
-                             'date_from': date_from,
-                             'date_to': date_to,
-                             'location': location,
-                             'status': status,
-                             'type': report_type
-                         })
+                         stats=stats)
 
 @admin_bp.route("/report/<int:report_id>/delete", methods=['POST'])
 @admin_required
@@ -106,6 +92,25 @@ def resolve_report(report_id):
         report.status = action
         db.session.commit()
         flash(f"Report {action}ed successfully", "success")
+    return redirect(url_for('admin.manage_reports'))
+
+@admin_bp.route("/fraud-report/<int:report_id>/resolve", methods=['POST'])
+@admin_required
+def resolve_fraud_report(report_id):
+    report = UserReport.query.get_or_404(report_id)
+    action = request.form.get('action')
+
+    if action == 'dismiss':
+        report.status = 'dismissed'
+        report.resolved_at = datetime.utcnow()
+        flash('Report dismissed successfully', 'success')
+    elif action == 'ban_user':
+        report.status = 'resolved'
+        report.resolved_at = datetime.utcnow()
+        report.reported_user.is_banned = True
+        flash('User has been banned', 'success')
+
+    db.session.commit()
     return redirect(url_for('admin.manage_reports'))
 
 @admin_bp.route("/post/<int:post_id>/update-status", methods=['POST'])
@@ -141,3 +146,34 @@ def delete_post(post_id):
     db.session.commit()
     flash("Post deleted successfully", "success")
     return redirect(url_for('admin.manage_reports'))
+
+@admin_bp.route("/posts")
+@admin_required
+def manage_posts():
+    filters = {
+        'category': request.args.get('category'),
+        'type': request.args.get('type'),
+        'status': request.args.get('status'),
+        'date_from': request.args.get('date_from'),
+        'date_to': request.args.get('date_to'),
+        'location': request.args.get('location')
+    }
+
+    # Build query with filters
+    query = Post.query
+    if filters['category']:
+        query = query.filter_by(category_name=filters['category'])
+    if filters['type']:
+        query = query.filter_by(type=filters['type'])
+    if filters['status']:
+        query = query.filter_by(status=filters['status'])
+    if filters['location']:
+        query = query.filter(Post.location.ilike(f"%{filters['location']}%"))
+    if filters['date_from']:
+        query = query.filter(Post.post_date >= filters['date_from'])
+    if filters['date_to']:
+        query = query.filter(Post.post_date <= filters['date_to'])
+
+    posts = query.order_by(Post.post_date.desc()).all()
+
+    return render_template('admin/manage_posts.html', posts=posts, filters=filters)

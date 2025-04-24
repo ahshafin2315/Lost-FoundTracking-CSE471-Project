@@ -162,6 +162,13 @@
                     </div>
                     {% endif %}
                     {% endif %}
+
+                    {% if session['user_id'] != post.user_id %}
+                    <button class="btn btn-warning mt-3"
+                            onclick='showReportModal("post", "{{ post.user_id }}", "{{ post.id }}")'>
+                        Report Suspicious Post
+                    </button>
+                    {% endif %}
                 </div>
 
                 <div class="card-footer bg-light">

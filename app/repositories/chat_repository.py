@@ -1,5 +1,6 @@
 from app.models.chat import Chat
 from app.models.post import Post
+from app.models.message import Message
 from sqlalchemy import or_, and_
 from app import db
 from datetime import datetime
@@ -22,28 +23,39 @@ class ChatRepository:
         return my_posts, participating_posts
 
     def get_conversation(self, post_id, user_id):
-        return Chat.query.filter(
+        # First get the chat record
+        chat = Chat.query.filter(
             Chat.post_id == post_id,
             or_(
                 Chat.sender_id == user_id,
                 Chat.receiver_id == user_id
             )
-        ).order_by(Chat.created_at).all()
+        ).first()
+
+        if chat:
+            # Then get all messages for this chat
+            return Message.query.filter_by(chat_id=chat.id).order_by(Message.created_at).all()
+        return []
 
     def save(self, chat):
         db.session.add(chat)
         db.session.commit()
         return chat
 
+    def save_message(self, chat_id, content):
+        message = Message(chat_id=chat_id, content=content)
+        db.session.add(message)
+        db.session.commit()
+        return message
+
     def mark_messages_read(self, messages):
         for message in messages:
             message.is_read = True
         db.session.commit()
 
-    def get_new_messages(self, post_id, timestamp):
-        """Get messages newer than the given timestamp"""
+    def get_new_messages(self, chat_id, timestamp):
         timestamp_dt = datetime.fromtimestamp(timestamp)
-        return Chat.query.filter(
-            Chat.post_id == post_id,
-            Chat.created_at > timestamp_dt
-        ).order_by(Chat.created_at).all()
+        return Message.query.filter(
+            Message.chat_id == chat_id,
+            Message.created_at > timestamp_dt
+        ).order_by(Message.created_at).all()

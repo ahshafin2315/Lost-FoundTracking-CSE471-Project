@@ -62,11 +62,13 @@ class VerificationService:
         notifications = [
             {
                 'user_id': claim.user_id,
+                'title': 'Claim Approved',  # Add title
                 'message': f'Your claim for "{post.item_name}" has been approved. You can now chat with the owner.',
                 'link': url_for('chat.conversation', post_id=post.id)
             },
             {
                 'user_id': post.user_id,
+                'title': 'Claim Update',  # Add title
                 'message': f'You can now chat with the claimer of "{post.item_name}".',
                 'link': url_for('chat.conversation', post_id=post.id)
             }
