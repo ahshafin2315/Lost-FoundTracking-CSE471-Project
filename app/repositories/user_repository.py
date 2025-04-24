@@ -24,9 +24,7 @@ class UserRepository:
         return user
 
     def get_top_contributors(self, limit):
-        return db.session.query(
-            User,
-            func.count(Post.id).label('post_count')
-        ).join(Post).group_by(User.id)\
-         .order_by(func.count(Post.id).desc())\
-         .limit(limit).all()
+        return db.session.query(User)\
+        .filter(User.contribution > 0)\
+        .order_by(User.contribution.desc())\
+        .limit(5).all()

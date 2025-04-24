@@ -37,7 +37,7 @@
                 </div>
                 <div class="card-body">
                     <div class="list-group list-group-flush">
-                        {% for contributor, post_count in top_contributors %}
+                        {% for contributor in top_contributors %}
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="me-2">
@@ -53,7 +53,7 @@
                                 </span>
                                 {{ contributor.name }}
                             </div>
-                            <span class="badge bg-primary rounded-pill">{{ post_count }} posts</span>
+                            <span class="badge bg-success rounded-pill">{{ contributor.contribution }} approvals</span>
                         </div>
                         {% endfor %}
                     </div>
