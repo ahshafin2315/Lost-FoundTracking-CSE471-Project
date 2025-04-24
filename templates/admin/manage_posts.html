@@ -4,13 +4,16 @@
 
 {% block content %}
 <div class="container py-4">
-    <h2 class="mb-4">User Posts Management</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">User Posts Management</h2>
+        <span class="badge bg-primary fs-6">{{ posts|length }} Posts</span>
+    </div>
 
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" class="row g-3">
-                <div class="col-md-2">
+                                <div class="col-md-2">
                     <label class="form-label">Category</label>
                     <select name="category" class="form-select">
                         <option value="">All</option>
@@ -55,11 +58,11 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Location</label>
-                    <input type="text" name="location" class="form-control" value="{{ filters.location }}">
+                    <input type="text" name="location" class="form-control" value="{{ filters.location|default('') }}" placeholder="Enter Location">
                 </div>
                 <div class="col-12">
                     <button type="submit" class="btn btn-primary">Apply Filters</button>
-                    <a href="{{ url_for('admin.manage_reports') }}" class="btn btn-secondary">Clear Filters</a>
+                    <a href="{{ url_for('admin.manage_posts') }}" class="btn btn-secondary">Clear Filters</a>
                 </div>
             </form>
         </div>

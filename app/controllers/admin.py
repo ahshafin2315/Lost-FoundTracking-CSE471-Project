@@ -42,40 +42,8 @@ def manage_users():
 @admin_bp.route("/reports")
 @admin_required
 def manage_reports():
-    # Get all reports with different types
-    fraud_reports = UserReport.query.filter(
-        UserReport.type.in_(['claim', 'message', 'post'])
-    ).order_by(UserReport.created_at.desc()).all()
-
-    # Get general user reports
-    user_reports = UserReport.query.filter_by(
-        type='user'
-    ).order_by(UserReport.created_at.desc()).all()
-
-    stats = {
-        'pending_fraud_reports': UserReport.query.filter(
-            UserReport.type.in_(['claim', 'message', 'post']),
-            UserReport.status == 'pending'
-        ).count(),
-        'pending_user_reports': UserReport.query.filter_by(
-            type='user',
-            status='pending'
-        ).count()
-    }
-
-    return render_template('admin/manage_reports.html',
-                         fraud_reports=fraud_reports,
-                         user_reports=user_reports,
-                         stats=stats)
-
-@admin_bp.route("/report/<int:report_id>/delete", methods=['POST'])
-@admin_required
-def delete_report(report_id):
-    report = UserReport.query.get_or_404(report_id)
-    db.session.delete(report)
-    db.session.commit()
-    flash("Report deleted successfully", "success")
-    return redirect(url_for('admin.manage_reports'))
+    fraud_reports = UserReport.query.order_by(UserReport.created_at.desc()).all()
+    return render_template('admin/manage_reports.html', fraud_reports=fraud_reports)
 
 @admin_bp.route("/user/<int:user_id>/toggle-ban", methods=['POST'])
 @admin_required
@@ -85,17 +53,6 @@ def toggle_user_ban(user_id):
     db.session.commit()
     flash(f"User {'banned' if user.is_banned else 'unbanned'} successfully", "success")
     return redirect(url_for('admin.manage_users'))
-
-@admin_bp.route("/report/<int:report_id>/resolve", methods=['POST'])
-@admin_required
-def resolve_report(report_id):
-    report = UserReport.query.get_or_404(report_id)
-    action = request.form.get('action')
-    if action in ['approve', 'reject']:
-        report.status = action
-        db.session.commit()
-        flash(f"Report {action}ed successfully", "success")
-    return redirect(url_for('admin.manage_reports'))
 
 @admin_bp.route("/fraud-report/<int:report_id>/resolve", methods=['POST'])
 @admin_required
@@ -112,6 +69,12 @@ def resolve_fraud_report(report_id):
         report.resolved_at = datetime.utcnow()
         report.reported_user.is_banned = True
         flash('User has been banned', 'success')
+    elif action == 'undo':
+        report.status = 'pending'
+        report.resolved_at = None
+        if report.reported_user.is_banned:
+            report.reported_user.is_banned = False
+        flash('Action undone successfully', 'success')
 
     db.session.commit()
     return redirect(url_for('admin.manage_reports'))
@@ -140,7 +103,7 @@ def edit_post(post_id):
             post.location = request.form.get('location')
             post.contact_method = request.form.get('contact_method')
             post.type = request.form.get('type')
-            
+
             # Handle date fields
             lost_found_date = request.form.get('lost_found_date')
             if lost_found_date:
@@ -161,7 +124,7 @@ def edit_post(post_id):
 
             db.session.commit()
             flash("Post updated successfully", "success")
-            return redirect(url_for('admin.manage_reports'))
+            return redirect(url_for('admin.manage_posts'))
         except Exception as e:
             db.session.rollback()
             flash(f"Error updating post: {str(e)}", "danger")
@@ -174,18 +137,18 @@ def delete_post(post_id):
     db.session.delete(post)
     db.session.commit()
     flash("Post deleted successfully", "success")
-    return redirect(url_for('admin.manage_reports'))
+    return redirect(url_for('admin.manage_posts'))
 
 @admin_bp.route("/posts")
 @admin_required
 def manage_posts():
     filters = {
-        'category': request.args.get('category'),
-        'type': request.args.get('type'),
-        'status': request.args.get('status'),
-        'date_from': request.args.get('date_from'),
-        'date_to': request.args.get('date_to'),
-        'location': request.args.get('location')
+        'category': request.args.get('category',''),
+        'type': request.args.get('type',''),
+        'status': request.args.get('status',''),
+        'date_from': request.args.get('date_from',''),
+        'date_to': request.args.get('date_to',''),
+        'location': request.args.get('location','')
     }
 
     # Build query with filters

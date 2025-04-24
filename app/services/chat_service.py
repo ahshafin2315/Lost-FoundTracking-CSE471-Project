@@ -16,34 +16,17 @@ class ChatService:
         return self.chat_repository.get_user_chats(user_id)
 
     def get_conversation(self, post_id, user_id):
-        # Get chat and messages
-        messages = self.chat_repository.get_conversation(post_id, user_id)
+        # Get post first
         post = self.post_repository.get_by_id(post_id)
 
-        if not post:
-            raise ValueError("Post not found")
+        # Get messages and chat
+        messages, chat = self.chat_repository.get_conversation(post_id, user_id)
 
-        is_owner = post.user_id == user_id
-        has_approved_claim = self.verification_repository.has_approved_claim(post_id, user_id)
-        is_lost_item = post.type == 'lost'
+        if not chat:
+            raise ValueError("Chat not found")
 
-        if not (is_owner or has_approved_claim or is_lost_item):
-            raise ValueError("Unauthorized access")
-
-        # Determine other user based on chat logic
-        if is_owner:
-            claim = self.verification_repository.get_approved_claim(post_id)
-            if claim and claim.user:
-                other_user = claim.user
-            else:
-                # Fallback to first message if no approved claim
-                first_message = self.chat_repository.get_first_message(post_id, user_id)
-                if first_message:
-                    other_user = first_message.sender if first_message.sender_id != user_id else first_message.receiver
-                else:
-                    raise ValueError("No chat history found")
-        else:
-            other_user = post.user
+        # Determine other user from chat object
+        other_user = chat.sender if chat.sender_id != user_id else chat.receiver
 
         return messages, post, other_user
 

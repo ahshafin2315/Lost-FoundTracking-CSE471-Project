@@ -47,12 +47,6 @@
                             <i class="fas fa-check-circle"></i> Found Items
                         </a>
                     </li>
-                    <!-- Within the admin navigation section -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.manage_posts') }}">
-                            <i class="fas fa-clipboard-list"></i> Manage Posts
-                        </a>
-                    </li>
                 </ul>
                 <!-- Add this after the main navigation items but before the user menu -->
                 <form class="d-flex mx-3" action="{{ url_for('posts.search') }}" method="GET">

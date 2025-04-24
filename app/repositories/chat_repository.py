@@ -34,8 +34,9 @@ class ChatRepository:
 
         if chat:
             # Then get all messages for this chat
-            return Message.query.filter_by(chat_id=chat.id).order_by(Message.created_at).all()
-        return []
+            messages = Message.query.filter_by(chat_id=chat.id).order_by(Message.created_at).all()
+            return messages, chat
+        return [], None
 
     def save(self, chat):
         db.session.add(chat)
@@ -59,3 +60,20 @@ class ChatRepository:
             Message.chat_id == chat_id,
             Message.created_at > timestamp_dt
         ).order_by(Message.created_at).all()
+
+    def get_first_message(self, post_id, user_id):
+        """Get the first message for a given post and user"""
+        chat = Chat.query.filter(
+            Chat.post_id == post_id,
+            or_(
+                Chat.sender_id == user_id,
+                Chat.receiver_id == user_id
+            )
+        ).first()
+
+        if chat:
+            # Get the first message for this chat ordered by creation date
+            message = Message.query.filter_by(chat_id=chat.id).order_by(Message.created_at).first()
+            return message
+
+        return None
