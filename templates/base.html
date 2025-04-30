@@ -64,10 +64,10 @@
                 </form>
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link position-relative" href="{{ url_for('chat.messages') }}">
+                        <a class="nav-link position-relative" href="{{ url_for('chat.inbox') }}">
                             <i class="fas fa-comments"></i>
                             {% if unread_chats > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            <span id="chat-nav-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                 {{ unread_chats }}
                             </span>
                             {% endif %}

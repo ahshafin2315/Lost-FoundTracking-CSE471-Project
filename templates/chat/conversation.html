@@ -9,30 +9,36 @@
             <div class="card shadow">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-0">{{ post.item_name }}</h5>
+                        <h5 class="mb-0">
+                            <span class="badge {% if post.type == 'lost' %}bg-danger{% else %}bg-success{% endif %} me-2">
+                                {{ post.type|title }}
+                            </span>
+                            {{ post.item_name }}
+                        </h5>
                         <small class="text-muted">Chatting with {{ other_user.name }}</small>
                     </div>
-                    <a href="{{ url_for('chat.messages') }}" class="btn btn-outline-secondary btn-sm">
+                    <a href="{{ url_for('chat.inbox') }}" class="btn btn-outline-secondary btn-sm">
                         <i class="fas fa-arrow-left"></i> Back to Messages
                     </a>
                 </div>
+
                 <div class="card-body chat-container" style="height: 400px; overflow-y: auto;" id="chatMessages">
                     {% for message in messages %}
-                        <div class="mb-3 {% if message.sender_id == session.user_id %}text-end{% endif %}">
-                            <div class="d-inline-block p-2 rounded {% if message.sender_id == session.user_id %}bg-primary text-white{% else %}bg-light{% endif %}" style="max-width: 70%;">
-                                <div class="message-text">{{ message.message }}</div>
-                                <small class="{% if message.sender_id == session.user_id %}text-white-50{% else %}text-muted{% endif %}">
-                                    {{ message.created_at.strftime('%H:%M') }}
-                                </small>
-                            </div>
+                    <div class="mb-3 {% if message.sender_id == session.user_id %}text-end{% endif %}">
+                        <div class="d-inline-block p-2 rounded {% if message.sender_id == session.user_id %}bg-primary text-white{% else %}bg-light{% endif %}"
+                             style="max-width: 70%;">
+                            <div class="message-text">{{ message.message }}</div>
+                            <small class="{% if message.sender_id == session.user_id %}text-white-50{% else %}text-muted{% endif %}">
+                                {{ message.created_at.strftime('%H:%M') }}
+                            </small>
                         </div>
+                    </div>
                     {% endfor %}
                 </div>
+
                 <div class="card-footer">
                     <form id="messageForm" class="d-flex">
-                        <input type="hidden" name="post_id" value="{{ post.id }}">
-                        <input type="hidden" name="receiver_id" value="{{ other_user.id }}">
-                        <input type="text" name="message" class="form-control me-2" placeholder="Type your message..." required>
+                        <input type="text" id="messageInput" class="form-control me-2" placeholder="Type your message..." required>
                         <button type="submit" class="btn btn-primary">Send</button>
                     </form>
                 </div>
@@ -43,82 +49,114 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script type="text/javascript">
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize variables
+    const socket = io();
     const chatContainer = document.getElementById('chatMessages');
     const messageForm = document.getElementById('messageForm');
-    let lastCheck = Math.floor(Date.now() / 1000);
+    const messageInput = document.getElementById('messageInput');
+
+    // Convert Python variables to JavaScript
+    const currentUserId = Number('{{ session.user_id }}');
+    const postId = Number('{{ post.id }}');
+    const otherUserId = Number('{{ other_user.id }}');
 
     function scrollToBottom() {
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    function addMessage(message, isOutgoing) {
+    function createMessageElement(data, isOutgoing) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = `mb-3 ${isOutgoing ? 'text-end' : ''}`;
+        messageDiv.classList.add('mb-3');
+        if (isOutgoing) {
+            messageDiv.classList.add('text-end');
+        }
+
         messageDiv.innerHTML = `
-            <div class="d-inline-block p-2 rounded ${isOutgoing ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 70%;">
-                <div class="message-text">${message.message}</div>
-                <small class="${isOutgoing ? 'text-white-50' : 'text-muted'}">${message.created_at}</small>
+            <div class="d-inline-block p-2 rounded ${isOutgoing ? 'bg-primary text-white' : 'bg-light'}"
+                 style="max-width: 70%;">
+                <div class="message-text"></div>
+                <small class="${isOutgoing ? 'text-white-50' : 'text-muted'}"></small>
             </div>
         `;
-        chatContainer.appendChild(messageDiv);
-        scrollToBottom();
+
+        messageDiv.querySelector('.message-text').textContent = data.message;
+        messageDiv.querySelector('small').textContent = data.created_at;
+
+        return messageDiv;
     }
 
-    scrollToBottom();
-
-    messageForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(messageForm);
-
-        fetch('{{ url_for("chat.send_message") }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert(data.error);
-                return;
-            }
-            addMessage({
-                message: data.message,
-                created_at: data.created_at.split(' ')[1]
-            }, true);
-            messageForm.reset();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to send message');
+    // Socket event handlers
+    socket.on('connect', function() {
+        // Join room specific to this post
+        socket.emit('join', {
+            post_id: postId,
+            room: `post_${postId}`
+        });
+        // Mark messages as read
+        socket.emit('mark_read', {
+            post_id: postId,
+            room: `post_${postId}`
         });
     });
 
-    // Function to check for new messages
-    function checkNewMessages() {
-        const currentTimeStamp = Math.floor(Date.now() / 1000);
-        fetch(`{{ url_for("chat.check_new_messages", post_id=post.id, timestamp=0) }}`.replace('0', lastCheck.toString()))
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    console.error(data.error);
-                    return;
-                }
+    // Update messages_read handler
+    socket.on('messages_read', function(data) {
+        if (data.post_id === postId) {
+            updateUnreadCount();
+        }
+    });
 
-                data.messages.forEach(message => {
-                    const isOutgoing = parseInt(message.sender_id) === parseInt("{{ session.user_id }}");
-                    addMessage(message, isOutgoing);
-                });
-
-                if (data.messages.length > 0) {
-                    lastCheck = currentTimeStamp;
+    function updateUnreadCount() {
+        // Update navbar badge
+        const navBadge = document.querySelector('#chat-nav-badge');
+        if (navBadge) {
+            const currentCount = parseInt(navBadge.textContent || '0');
+            if (currentCount > 0) {
+                const newCount = currentCount - 1;
+                if (newCount <= 0) {
+                    navBadge.style.display = 'none';
+                } else {
+                    navBadge.textContent = newCount;
                 }
-            })
-            .catch(error => console.error('Error checking new messages:', error));
+            }
+        }
+
+        // Update any page-specific unread indicators
+        document.querySelectorAll('.unread-badge').forEach(badge => {
+            badge.style.display = 'none';
+        });
     }
 
-    // Check for new messages every 3 seconds
-    setInterval(checkNewMessages, 3000);
+    socket.on('message', function(data) {
+        const isOutgoing = Number(data.sender_id) === currentUserId;
+        const messageElement = createMessageElement(data, isOutgoing);
+        chatContainer.appendChild(messageElement);
+        scrollToBottom();
+    });
+
+    // Form submission
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const message = messageInput.value.trim();
+        if (!message) {
+            return;
+        }
+
+        socket.emit('message', {
+            post_id: postId,
+            receiver_id: otherUserId,
+            message: message
+        });
+
+        messageInput.value = '';
+    });
+
+    // Initial scroll to bottom
+    scrollToBottom();
 });
 </script>
 {% endblock %}

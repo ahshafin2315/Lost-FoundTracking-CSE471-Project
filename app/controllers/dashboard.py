@@ -3,6 +3,9 @@ from app.services.user_service import UserService
 from app.services.post_service import PostService
 from app.utils.decorators import login_required
 from app.models.notification import Notification
+from app.models.verificationClaim import VerificationClaim
+from app.models.post import Post
+from app.models.user import User
 from app import db
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -15,7 +18,7 @@ def dashboard():
     current_user = user_service.get_by_id(session['user_id'])
     stats = post_service.get_user_stats(session['user_id'])
     recent_activities = post_service.get_recent_activities()
-    
+
     return render_template(
         "dashboard.html",
         user=current_user,
@@ -41,3 +44,22 @@ def clear_notifications():
     Notification.query.filter_by(user_id=session['user_id']).delete()
     db.session.commit()
     return redirect(request.referrer or url_for('dashboard.dashboard'))
+
+@dashboard_bp.route("/all-claims")
+@login_required
+def all_claims():
+    # Get all verification claims for the user's posts
+    claims = (db.session.query(VerificationClaim, Post, User)
+             .join(Post, VerificationClaim.post_id == Post.id)
+             .join(User, VerificationClaim.user_id == User.id)
+             .filter(Post.user_id == session['user_id'])
+             .order_by(VerificationClaim.submission_date.desc())
+             .all())
+
+    claims_data = [{
+        'claim': claim,
+        'post': post,
+        'user': user
+    } for claim, post, user in claims]
+
+    return render_template('all_claims.html', claims=claims_data)

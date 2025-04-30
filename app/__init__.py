@@ -1,6 +1,7 @@
 from flask import Flask, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_socketio import SocketIO
 from datetime import datetime
 import os
 
@@ -13,6 +14,7 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)  # Initialize Flask-Migrate
+socketio = SocketIO(app)
 
 # Ensure uploads directory exists
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -72,6 +74,9 @@ app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 app.register_blueprint(verification_bp, url_prefix='/verification')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(chat_bp, url_prefix='/chat')
+
+# Import socket events after socketio initialization
+from app.sockets import socket_events
 
 # Register error handlers
 from app.utils.error_handlers import register_error_handlers

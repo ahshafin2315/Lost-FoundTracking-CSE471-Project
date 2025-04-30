@@ -1,4 +1,4 @@
-from app import db
+from app import db, socketio
 from datetime import datetime
 
 class Chat(db.Model):
@@ -14,3 +14,26 @@ class Chat(db.Model):
     post = db.relationship('Post', backref='chats')
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_chats')
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_chats')
+
+    @classmethod
+    def mark_messages_read(cls, post_id, user_id):
+        """Class method to mark messages as read and emit the update"""
+        messages = cls.query.filter_by(
+            post_id=post_id,
+            receiver_id=user_id,
+            is_read=False
+        ).all()
+
+        if messages:
+            for message in messages:
+                message.is_read = True
+            db.session.commit()
+
+            # Emit to all clients in the room
+            socketio.emit('messages_read', {
+                'post_id': post_id,
+                'reader_id': user_id,
+                'room': f'post_{post_id}'
+            })
+
+        return len(messages)
