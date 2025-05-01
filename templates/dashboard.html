@@ -25,6 +25,9 @@
                     </a>
                     <a href="{{ url_for('dashboard.all_claims') }}" class="btn btn-outline-info w-100 mt-2">
                         <i class="fas fa-clipboard-check"></i> View All Claims
+                        {% if pending_claims_count > 0 %}
+                        <span class="badge bg-danger ms-1">{{ pending_claims_count }}</span>
+                        {% endif %}
                     </a>
                 </div>
             </div>

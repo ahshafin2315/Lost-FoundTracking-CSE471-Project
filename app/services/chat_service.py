@@ -1,29 +1,22 @@
-from app.models.chat import Chat
-from app.models.post import Post
-from app.models.verificationClaim import VerificationClaim
-from app import db
-from sqlalchemy import or_, and_
+from app.repositories.chat_repository import ChatRepository
+from app.repositories.verification_repository import VerificationRepository
+from app.repositories.post_repository import PostRepository
 
 class ChatService:
-    @staticmethod
-    def get_post_chats(post_id, user_id):
-        return Chat.query.filter(
-            Chat.post_id == post_id,
-            or_(Chat.sender_id == user_id, Chat.receiver_id == user_id)
-        ).order_by(Chat.created_at).all()
+    def __init__(self):
+        self.chat_repository = ChatRepository()
+        self.verification_repository = VerificationRepository()
+        self.post_repository = PostRepository()
 
-    @staticmethod
-    def get_inbox_items(user_id):
-        # Get all posts where the user has chats
-        posts_with_chats = db.session.query(Post).join(Chat).filter(
-            or_(Chat.sender_id == user_id, Chat.receiver_id == user_id)
-        ).distinct().all()
+    def get_post_chats(self, post_id, user_id):
+        return self.chat_repository.get_post_chats(post_id, user_id)
 
-        # Split posts into owned and other posts
+    def get_inbox_items(self, user_id):
+        posts = self.chat_repository.get_posts_with_chats(user_id)
         owned_posts = []
         other_posts = []
 
-        for post in posts_with_chats:
+        for post in posts:
             if post.user_id == user_id:
                 owned_posts.append(post)
             else:
@@ -34,35 +27,53 @@ class ChatService:
             'other_posts': other_posts
         }
 
-    @staticmethod
-    def can_access_chat(user_id, post_id):
-        post = Post.query.get(post_id)
+    def can_access_chat(self, user_id, post_id):
+        post = self.post_repository.get_by_id(post_id)
         if not post:
             return False
 
-        # If it's a lost item post, anyone can chat
+        # For lost items, anyone can chat
         if post.type == 'lost':
             return True
 
-        # If user owns the post
+        # Post owner can always chat
         if post.user_id == user_id:
             return True
 
-        # For found items, check verification status
+
+        # For found items, only approved claimers can chat
         if post.type == 'found':
-            claim = VerificationClaim.query.filter_by(
+            claim = self.verification_repository.get_claim_by_status(
                 post_id=post_id,
                 user_id=user_id,
                 status='approved'
-            ).first()
+            )
             return claim is not None
 
         return False
 
-    @staticmethod
-    def get_unread_count(user_id):
-        return Chat.query.filter_by(receiver_id=user_id, is_read=False).count()
+    def get_unread_count(self, user_id):
+        return self.chat_repository.get_unread_messages_count(user_id)
 
-    @staticmethod
-    def mark_messages_read(post_id, user_id):
-        return Chat.mark_messages_read(post_id, user_id)
+    def mark_messages_read(self, post_id, user_id):
+        return self.chat_repository.mark_messages_read(post_id, user_id)
+
+    def create_message(self, post_id, sender_id, receiver_id, message_text):
+        """Create a new chat message if user has access"""
+        if not self.can_access_chat(sender_id, post_id):
+            return None
+
+        message = self.chat_repository.create_message(
+            post_id=post_id,
+            sender_id=sender_id,
+            receiver_id=receiver_id,
+            message_text=message_text
+        )
+
+        return {
+            'id': message.id,
+            'sender_id': message.sender_id,
+            'message': message.message,
+            'created_at': message.created_at.strftime('%H:%M')
+        }
+

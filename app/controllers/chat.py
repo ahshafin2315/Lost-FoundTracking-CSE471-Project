@@ -1,17 +1,22 @@
-from flask import Blueprint, render_template, session, jsonify, request, flash, redirect, url_for
-from app.models.post import Post
-from app.models.user import User
-from app.models.verificationClaim import VerificationClaim
+from flask import Blueprint, render_template, session, jsonify, flash, redirect, url_for
+from app.services.verification_service import VerificationService
 from app.services.chat_service import ChatService
+from app.services.post_service import PostService
+from app.services.user_service import UserService
 from app.utils.decorators import login_required
-from app import db
 
 chat_bp = Blueprint('chat', __name__, url_prefix='/chat')
+
+# Initialize services
+chat_service = ChatService()
+post_service = PostService()
+user_service = UserService()
+verification_service = VerificationService()
 
 @chat_bp.route('/inbox')
 @login_required
 def inbox():
-    inbox_items = ChatService.get_inbox_items(session['user_id'])
+    inbox_items = chat_service.get_inbox_items(session['user_id'])
     return render_template('chat/inbox.html',
                          owned_posts=inbox_items['owned_posts'],
                          other_posts=inbox_items['other_posts'])
@@ -25,36 +30,39 @@ def messages():
 @chat_bp.route('/conversation/<int:post_id>')
 @login_required
 def conversation(post_id):
-    if not ChatService.can_access_chat(session['user_id'], post_id):
+    if not chat_service.can_access_chat(session['user_id'], post_id):
         return jsonify({'error': 'Unauthorized access'}), 403
 
-    post = Post.query.get_or_404(post_id)
-    messages = ChatService.get_post_chats(post_id, session['user_id'])
+    post = post_service.get_by_id(post_id)
+    if not post:
+        return jsonify({'error': 'Post not found'}), 404
 
-    # Get the other user
+    messages = chat_service.get_post_chats(post_id, session['user_id'])
+
+    # Get chat participant info
     if post.user_id == session['user_id']:
-        # If owner, get the claimer from verification claim
+        # If owner, get the approved claimer for found items
         if post.type == 'found':
-            claim = VerificationClaim.query.filter_by(
-                post_id=post_id,
-                status='approved'
-            ).first()
-            other_user_id = claim.user_id if claim else None
+            claim_data = verification_service.get_approved_claim(post_id)
+            if claim_data:
+                other_user = claim_data['user']
+            else:
+                flash('No approved claim found for this post', 'error')
+                return redirect(url_for('posts.view_post', post_id=post_id))
         else:
-            # For lost items, get latest chatter or None
-            latest_chat = next((chat for chat in messages if chat.sender_id != session['user_id']), None)
-            other_user_id = latest_chat.sender_id if latest_chat else None
+            # For lost items, get first chatter
+            other_chatter = next((msg for msg in messages if msg.sender_id != session['user_id']), None)
+            other_user = user_service.get_by_id(other_chatter.sender_id) if other_chatter else None
     else:
-        # If not owner, other user is always the post owner
-        other_user_id = post.user_id
+        # If not owner, other user is the post owner
+        other_user = user_service.get_by_id(post.user_id)
 
-    other_user = User.query.get_or_404(other_user_id) if other_user_id else None
     if not other_user:
         flash('Could not determine chat participant', 'error')
         return redirect(url_for('posts.view_post', post_id=post_id))
 
     # Mark messages as read
-    ChatService.mark_messages_read(post_id, session['user_id'])
+    chat_service.mark_messages_read(post_id, session['user_id'])
 
     return render_template('chat/conversation.html',
                          post=post,

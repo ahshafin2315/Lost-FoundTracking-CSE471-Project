@@ -100,30 +100,39 @@
                             </span>
                             {% endif %}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationsDropdown" style="width: 300px; padding: 0;">
-                            <li class="dropdown-header border-bottom p-3 d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">Notifications</h6>
+                        <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationsDropdown">
+                            <li class="dropdown-header border-bottom p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Notifications</h6>
+                                    {% if notifications_count > 0 %}
+                                    <span class="badge bg-primary">{{ notifications_count }}</span>
+                                    {% endif %}
+                                </div>
+                            </li>
+                            <div class="notification-scroll">
                                 {% if notifications %}
-                                <a href="{{ url_for('dashboard.clear_notifications') }}" class="btn btn-sm btn-light">Clear All</a>
+                                    {% for notification in notifications[:6] %}
+                                    <li>
+                                        <a href="{{ url_for('dashboard.mark_notification_read', notification_id=notification.id) }}"
+                                           class="dropdown-item notification-link {% if not notification.is_read %}fw-bold bg-light{% endif %}">
+                                            <div class="notification-content">
+                                                <p class="notification-text mb-1">{{ notification.message }}</p>
+                                                <small class="notification-text d-block">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li>
+                                        <div class="dropdown-item text-muted text-center">No notifications</div>
+                                    </li>
                                 {% endif %}
-                            </li>
+                            </div>
                             {% if notifications %}
-                            {% for notification in notifications %}
-                            <li>
-                                <a href="{{ url_for('dashboard.mark_notification_read', notification_id=notification.id) }}"
-                                   class="dropdown-item p-3 border-bottom notification-link {% if not notification.is_read %}fw-bold bg-light{% endif %}">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-grow-1">
-                                            <p class="mb-0">{{ notification.message }}</p>
-                                            <small class="text-muted">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                                        </div>
-                                    </div>
+                            <li class="border-top">
+                                <a href="{{ url_for('dashboard.notifications') }}" class="dropdown-item text-center p-2">
+                                    View All Notifications
                                 </a>
-                            </li>
-                            {% endfor %}
-                            {% else %}
-                            <li>
-                                <div class="dropdown-item text-muted p-3 text-center">No notifications</div>
                             </li>
                             {% endif %}
                         </ul>
