@@ -21,12 +21,6 @@ def inbox():
                          owned_posts=inbox_items['owned_posts'],
                          other_posts=inbox_items['other_posts'])
 
-@chat_bp.route('/messages')
-@login_required
-def messages():
-    """Alias for inbox route for better semantics"""
-    return inbox()
-
 @chat_bp.route('/conversation/<int:post_id>')
 @login_required
 def conversation(post_id):
@@ -37,7 +31,7 @@ def conversation(post_id):
     if not post:
         return jsonify({'error': 'Post not found'}), 404
 
-    messages = chat_service.get_post_chats(post_id, session['user_id'])
+    chats = chat_service.get_post_chats(post_id, session['user_id'])
 
     # Get chat participant info
     if post.user_id == session['user_id']:
@@ -51,7 +45,7 @@ def conversation(post_id):
                 return redirect(url_for('posts.view_post', post_id=post_id))
         else:
             # For lost items, get first chatter
-            other_chatter = next((msg for msg in messages if msg.sender_id != session['user_id']), None)
+            other_chatter = next((chat for chat in chats if chat.sender_id != session['user_id']), None)
             other_user = user_service.get_by_id(other_chatter.sender_id) if other_chatter else None
     else:
         # If not owner, other user is the post owner
@@ -66,5 +60,5 @@ def conversation(post_id):
 
     return render_template('chat/conversation.html',
                          post=post,
-                         messages=messages,
+                         chats=chats,
                          other_user=other_user)

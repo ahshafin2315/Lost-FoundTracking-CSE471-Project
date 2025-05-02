@@ -29,9 +29,6 @@ class PostService:
             'found_items': len(found_items)
         }
 
-    def get_recent_activities(self, limit=5):
-        return self.post_repository.get_recent(limit)
-
     def get_by_type_and_user(self, type_name, user_id):
         return self.post_repository.get_by_type_and_user(type_name, user_id)
 
@@ -158,3 +155,9 @@ class PostService:
         except Exception as e:
             print(f"Error processing matches: {e}")
             logging.error(f"Error processing matches: {e}")
+
+    def search_posts(self, query, filters=None):
+        return self.post_repository.search(query, filters)
+
+    def update_status(self, post_id, status):
+        return self.post_repository.update_status(post_id, status)

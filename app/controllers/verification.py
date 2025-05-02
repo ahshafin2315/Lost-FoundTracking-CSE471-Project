@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
 from app.services.verification_service import VerificationService
 from app.services.notification_service import NotificationService
@@ -29,7 +30,7 @@ def verify_item(post_id):
 
             flash("Your verification claim has been submitted successfully.", "success")
             return redirect(url_for('posts.view_post', post_id=post_id))
-        except Exception as e:
+        except ValueError as e:
             flash(str(e), "danger")
             return redirect(url_for('verification.verify_item', post_id=post_id))
 

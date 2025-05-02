@@ -16,6 +16,14 @@ class VerificationService:
     def get_post(self, post_id):
         return self.post_repository.get_by_id(post_id)
 
+    def get_claims_for_post(self, post_id):
+        claims = self.verification_repository.get_claims_for_post(post_id)
+        return [{
+            'claim': claim,
+            'user': claim.user,
+            'proof_data': json.loads(claim.proof_details)
+        } for claim in claims]
+
     def create_verification_claim(self, post_id, user_id, form_data, files):
         # Check for existing claim
         existing_claim = self.verification_repository.get_by_post_and_user(post_id, user_id)

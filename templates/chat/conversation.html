@@ -23,14 +23,19 @@
                 </div>
 
                 <div class="card-body chat-container" style="height: 400px; overflow-y: auto;" id="chatMessages">
-                    {% for message in messages %}
-                    <div class="mb-3 {% if message.sender_id == session.user_id %}text-end{% endif %}">
-                        <div class="d-inline-block p-2 rounded {% if message.sender_id == session.user_id %}bg-primary text-white{% else %}bg-light{% endif %}"
-                             style="max-width: 70%;">
-                            <div class="message-text">{{ message.message }}</div>
-                            <small class="{% if message.sender_id == session.user_id %}text-white-50{% else %}text-muted{% endif %}">
-                                {{ message.created_at.strftime('%H:%M') }}
+                    {% for chat in chats %}
+                    <div class="mb-3 {% if chat.sender_id == session.user_id %}text-end{% endif %}">
+                        <div class="d-inline-block p-2 rounded {% if chat.sender_id == session.user_id %}bg-primary text-white{% else %}bg-light{% endif %}" style="max-width: 70%;">
+                            <div class="message-text">{{ chat.message }}</div>
+                            <small class="{% if chat.sender_id == session.user_id %}text-white-50{% else %}text-muted{% endif %}">
+                                {{ chat.created_at.strftime('%H:%M') }}
                             </small>
+                            {% if chat.sender_id != session['user_id'] %}
+                            <button class="btn btn-sm btn-link text-warning"
+                                    onclick='showReportModal("chat", "{{ chat.sender_id }}", "{{ chat.id }}")'>
+                                <i class="fas fa-flag"></i>
+                            </button>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}

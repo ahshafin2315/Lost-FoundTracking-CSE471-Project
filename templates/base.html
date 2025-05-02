@@ -11,6 +11,7 @@
 
     <!-- Font Awesome 6 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
@@ -174,6 +175,35 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Report Modal -->
+    <div class="modal fade" id="reportModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Report Suspicious Activity</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('reports.submit_report') }}" method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" name="report_type" id="reportType">
+                        <input type="hidden" name="reported_id" id="reportedId">
+                        <input type="hidden" name="context_id" id="contextId">
+
+                        <div class="mb-3">
+                            <label class="form-label">Reason for Report</label>
+                            <textarea class="form-control" name="reason" rows="4" required
+                                    placeholder="Please provide details about why you're reporting this..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Submit Report</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-light py-3 mt-auto">
         <div class="container-fluid px-4">
@@ -202,6 +232,14 @@
             }
         });
     });
+
+    function showReportModal(type, reportedId, contextId) {
+        const modal = document.getElementById('reportModal');
+        document.getElementById('reportType').value = type;
+        document.getElementById('reportedId').value = reportedId;
+        document.getElementById('contextId').value = contextId;
+        new bootstrap.Modal(modal).show();
+    }
     </script>
 </body>
 
