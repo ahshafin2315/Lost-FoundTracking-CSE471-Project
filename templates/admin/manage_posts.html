@@ -13,7 +13,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" class="row g-3">
-                                <div class="col-md-2">
+                <div class="col-md-2">
                     <label class="form-label">Category</label>
                     <select name="category" class="form-select">
                         <option value="">All</option>
@@ -36,16 +36,6 @@
                         <option value="">All</option>
                         <option value="lost" {% if filters.type == 'lost' %}selected{% endif %}>Lost</option>
                         <option value="found" {% if filters.type == 'found' %}selected{% endif %}>Found</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        <option value="">All</option>
-                        <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active</option>
-                        <option value="resolved" {% if filters.status == 'resolved' %}selected{% endif %}>Resolved</option>
-                        <option value="hidden" {% if filters.status == 'hidden' %}selected{% endif %}>Hidden</option>
-                        <option value="flagged" {% if filters.status == 'flagged' %}selected{% endif %}>Flagged</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -110,37 +100,6 @@
                                        class="btn btn-sm btn-info">View</a>
                                     <a href="{{ url_for('admin.edit_post', post_id=post.id) }}"
                                        class="btn btn-sm btn-warning">Edit</a>
-                                    <button type="button"
-                                            class="btn btn-sm btn-success dropdown-toggle"
-                                            data-bs-toggle="dropdown">
-                                        Status
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li>
-                                            <form action="{{ url_for('admin.update_post_status', post_id=post.id) }}" method="POST">
-                                                <input type="hidden" name="status" value="active">
-                                                <button type="submit" class="dropdown-item">Mark Active</button>
-                                            </form>
-                                        </li>
-                                        <li>
-                                            <form action="{{ url_for('admin.update_post_status', post_id=post.id) }}" method="POST">
-                                                <input type="hidden" name="status" value="resolved">
-                                                <button type="submit" class="dropdown-item">Mark Resolved</button>
-                                            </form>
-                                        </li>
-                                        <li>
-                                            <form action="{{ url_for('admin.update_post_status', post_id=post.id) }}" method="POST">
-                                                <input type="hidden" name="status" value="hidden">
-                                                <button type="submit" class="dropdown-item">Hide Post</button>
-                                            </form>
-                                        </li>
-                                        <li>
-                                            <form action="{{ url_for('admin.update_post_status', post_id=post.id) }}" method="POST">
-                                                <input type="hidden" name="status" value="flagged">
-                                                <button type="submit" class="dropdown-item">Flag Post</button>
-                                            </form>
-                                        </li>
-                                    </ul>
                                     <form action="{{ url_for('admin.delete_post', post_id=post.id) }}"
                                           method="POST"
                                           onsubmit="return confirm('Are you sure you want to delete this post?');"

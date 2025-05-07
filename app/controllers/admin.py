@@ -50,14 +50,6 @@ def resolve_fraud_report(report_id):
     flash("Fraud report resolved successfully", "success")
     return redirect(url_for('admin.manage_reports'))
 
-@admin_bp.route("/post/<int:post_id>/update-status", methods=['POST'])
-@admin_required
-def update_post_status(post_id):
-    status = request.form.get('status')
-    post_service.update_status(post_id, status)
-    flash(f"Post status updated to {status}", "success")
-    return redirect(url_for('admin.manage_reports'))
-
 @admin_bp.route("/post/<int:post_id>/edit", methods=['GET', 'POST'])
 @admin_required
 def edit_post(post_id):
@@ -96,7 +88,6 @@ def manage_posts():
     filters = {
         'category': request.args.get('category', ''),
         'type': request.args.get('type', ''),
-        'status': request.args.get('status', ''),
         'date_from': request.args.get('date_from', ''),
         'date_to': request.args.get('date_to', ''),
         'location': request.args.get('location', '')
