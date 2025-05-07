@@ -126,6 +126,7 @@ class PostService:
         try:
             print(f"Processing matches for post {post.id}")  # Debug log
             matches = self.matching_service.find_matches(post)
+            print(f"Matches found: {matches}")  # Debug log
 
             if matches:
                 print(f"Found {len(matches)} potential matches")  # Debug log
