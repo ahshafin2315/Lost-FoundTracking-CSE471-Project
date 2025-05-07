@@ -13,7 +13,7 @@ app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, '..', 'static', 'uploa
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)  # Initialize Flask-Migrate
+migrate = Migrate(app, db)
 socketio = SocketIO(app)
 
 # Ensure uploads directory exists

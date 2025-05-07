@@ -16,14 +16,6 @@ class VerificationService:
     def get_post(self, post_id):
         return self.post_repository.get_by_id(post_id)
 
-    def get_claims_for_post(self, post_id):
-        claims = self.verification_repository.get_claims_for_post(post_id)
-        return [{
-            'claim': claim,
-            'user': claim.user,
-            'proof_data': json.loads(claim.proof_details)
-        } for claim in claims]
-
     def create_verification_claim(self, post_id, user_id, form_data, files):
         # Check for existing claim
         existing_claim = self.verification_repository.get_by_post_and_user(post_id, user_id)
@@ -50,7 +42,8 @@ class VerificationService:
             })
         }
 
-        return self.verification_repository.create(claim_data)
+        return self.verification_repository.create_claim(claim_data)
+
 
     def get_user_claims(self, user_id):
         """Get all verification claims for user's posts with associated data"""
@@ -69,6 +62,7 @@ class VerificationService:
 
         return claims_data
 
+
     def update_claim_status(self, claim_id, post_id, new_status):
         """Update claim status and handle notifications"""
         claim = self.verification_repository.update_claim_status(claim_id, new_status)
@@ -77,6 +71,13 @@ class VerificationService:
             if new_status == 'approved':
                 post.verification_status = 'verified'
                 self.post_repository.update(post)
+                # Return data needed for chat notifications
+                return {
+                    'claim_user_id': claim.user_id,
+                    'post_user_id': post.user_id,
+                    'post_id': post.id,
+                    'post_name': post.item_name
+                }
 
             message = f"Your verification claim for '{post.item_name}' has been {new_status}"
             self.notification_service.create_verification_notification(
@@ -86,6 +87,7 @@ class VerificationService:
             )
             return True
         return False
+
 
     def get_post_claims(self, post_id):
         """Get all claims for a specific post with user data"""
@@ -103,27 +105,6 @@ class VerificationService:
 
         return claims_data
 
-    def approve_claim(self, claim_id, approver_id):
-        """Approve a verification claim and return relevant data"""
-        claim = self.verification_repository.get_by_id(claim_id)
-        if not claim:
-            raise ValueError("Claim not found")
-
-        post = self.post_repository.get_by_id(claim.post_id)
-        if not post or post.user_id != approver_id:
-            raise ValueError("Unauthorized to approve this claim")
-
-        # Update claim and post status
-        claim = self.verification_repository.update_claim_status(claim_id, 'approved')
-        post.verification_status = 'verified'
-        self.post_repository.update(post)
-
-        return {
-            'claim_user_id': claim.user_id,
-            'post_user_id': post.user_id,
-            'post_id': post.id,
-            'post_name': post.item_name
-        }
 
     def get_approved_claim(self, post_id):
         """Get the approved claim for a post with user data"""
@@ -132,6 +113,7 @@ class VerificationService:
             user = self.user_repository.get_by_id(claim.user_id)
             return {'claim': claim, 'user': user}
         return None
+
 
     def get_user_post_claim(self, post_id, user_id):
         """Get a user's claim for a specific post"""

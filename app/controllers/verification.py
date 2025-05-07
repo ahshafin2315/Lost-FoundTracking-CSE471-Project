@@ -58,31 +58,17 @@ def update_claim_status(post_id, claim_id):
 
     new_status = request.form.get("status")
     if new_status in ["approved", "rejected"]:
-        success = verification_service.update_claim_status(claim_id, post_id, new_status)
-        if success:
+        result = verification_service.update_claim_status(claim_id, post_id, new_status)
+        if result:
+            if new_status == "approved" and isinstance(result, dict):
+                notification_service.create_chat_enabled_notifications(
+                    result['claim_user_id'],
+                    result['post_user_id'],
+                    result['post_id'],
+                    result['post_name']
+                )
             flash(f"Claim has been {new_status}", "success")
         else:
             flash("Error updating claim status", "danger")
 
     return redirect(url_for("verification.view_claims", post_id=post_id))
-
-@verification_bp.route('/approve/<int:claim_id>', methods=['POST'])
-@login_required
-def approve_claim(claim_id):
-    try:
-        claim_data = verification_service.approve_claim(claim_id, session['user_id'])
-        if claim_data:
-            notification_service.create_chat_enabled_notifications(
-                claim_data['claim_user_id'],
-                claim_data['post_user_id'],
-                claim_data['post_id'],
-                claim_data['post_name']
-            )
-            flash('Claim has been approved successfully.', 'success')
-            return redirect(url_for('posts.view_post', post_id=claim_data['post_id']))
-
-        flash('Error approving claim', 'danger')
-        return redirect(url_for('posts.view_post', post_id=claim_data['post_id']))
-    except ValueError as e:
-        flash(str(e), 'danger')
-        return redirect(url_for('dashboard.dashboard'))

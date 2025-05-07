@@ -19,7 +19,7 @@ class VerificationRepository:
             user_id=user_id
         ).first()
 
-    def create(self, data):
+    def create_claim(self, data):
         """Create new verification claim"""
         claim = VerificationClaim(**data)
         db.session.add(claim)
