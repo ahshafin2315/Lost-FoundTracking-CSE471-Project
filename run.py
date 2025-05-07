@@ -26,8 +26,9 @@ def create_default_users():
 
     db.session.commit()
 
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         create_default_users()
-    socketio.run(app, debug=True)
+    socketio.run(app, port=4000, debug=True)
