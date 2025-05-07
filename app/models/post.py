@@ -18,5 +18,5 @@ class Post(db.Model):
     item_name = db.Column(db.String(100))
     contact_method = db.Column(db.String(50))
     verification_claims = db.relationship("VerificationClaim", backref="post", lazy=True)
-    # Add cascade delete for chats
-    chats = db.relationship('Chat', backref='post', cascade='all, delete-orphan')
+    # Add relationship with correct backref
+    chats = db.relationship('Chat', backref=db.backref('chat_post', lazy=True), cascade='all, delete-orphan')
